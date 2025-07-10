@@ -11,9 +11,11 @@ import { logout } from "./store/authSlice";
 import ClientesPage from "./pages/ClientesPage.jsx";
 import RegistrosHorasPage from "./pages/RegistrosHorasPage.jsx";
 import ReportesPage from "./pages/ReportesPage.jsx";
+import AdminPage from "./pages/AdminPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import "./styles/main.css";
+import { isAdmin, hasPermission } from "./config/admin";
 
 function App() {
   const { isAuthenticated, currentUser } = useSelector((state) => state.auth);
@@ -38,6 +40,11 @@ function App() {
               <li>
                 <Link to="/reportes">Reportes</Link>
               </li>
+              {isAdmin(currentUser) && (
+                <li>
+                  <Link to="/admin">Administración</Link>
+                </li>
+              )}
               <li className="user-info">
                 <span>
                   Usuario: {currentUser?.fullName || currentUser?.username}
@@ -73,6 +80,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ReportesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminPage />
                 </ProtectedRoute>
               }
             />

@@ -1,14 +1,20 @@
 // Configuración de seguridad
 // En producción, estas claves deberían estar en variables de entorno
 
+import { getEnvVar } from "./environment";
+
 export const SECURITY_CONFIG = {
   // Clave principal para encriptación AES
-  ENCRYPTION_KEY:
-    process.env.REACT_APP_ENCRYPTION_KEY || "horas-cliente-secret-key-2024",
+  ENCRYPTION_KEY: getEnvVar(
+    "REACT_APP_ENCRYPTION_KEY",
+    "horas-cliente-secret-key-2024"
+  ),
 
   // Salt para hashing de contraseñas (en producción debería ser único por usuario)
-  PASSWORD_SALT:
-    process.env.REACT_APP_PASSWORD_SALT || "horas-cliente-salt-2024",
+  PASSWORD_SALT: getEnvVar(
+    "REACT_APP_PASSWORD_SALT",
+    "horas-cliente-salt-2024"
+  ),
 
   // Configuración de encriptación
   ENCRYPTION_CONFIG: {

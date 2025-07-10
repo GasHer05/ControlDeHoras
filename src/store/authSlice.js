@@ -11,12 +11,30 @@ import {
   recordAttempt,
   clearAttempts,
 } from "../utils/rateLimiter";
+import { ADMIN_CONFIG } from "../config/admin";
 
 // Estado inicial para autenticación
 const initialState = {
   isAuthenticated: false,
   currentUser: null,
-  users: [], // Lista de usuarios registrados
+  users: [
+    // Usuario administrador por defecto
+    {
+      id: "admin-default",
+      username: ADMIN_CONFIG.DEFAULT_ADMIN.username,
+      fullName: ADMIN_CONFIG.DEFAULT_ADMIN.fullName,
+      password: hashPassword(
+        ADMIN_CONFIG.DEFAULT_ADMIN.password,
+        "admin-default"
+      ),
+      role: ADMIN_CONFIG.DEFAULT_ADMIN.role,
+      email: ADMIN_CONFIG.DEFAULT_ADMIN.email,
+      isActive: ADMIN_CONFIG.DEFAULT_ADMIN.isActive,
+      securityQuestion: "¿Cuál es el nombre de tu primera mascota?",
+      securityAnswer: encryptData("admin"),
+      createdAt: ADMIN_CONFIG.DEFAULT_ADMIN.createdAt,
+    },
+  ],
   error: null,
   success: null,
 };
@@ -25,10 +43,26 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Registrar nuevo usuario
+    // Registrar nuevo usuario (solo admin puede crear usuarios)
     register: {
       reducer(state, action) {
-        const { fullName, username, password, securityAnswer } = action.payload;
+        const {
+          fullName,
+          username,
+          password,
+          securityAnswer,
+          role = "user",
+          createdBy,
+        } = action.payload;
+
+        // Verificar que solo un admin puede crear usuarios
+        if (
+          !createdBy ||
+          !state.users.find((u) => u.id === createdBy && u.role === "admin")
+        ) {
+          state.error = "Solo los administradores pueden crear usuarios";
+          return;
+        }
 
         // Asegurar que users existe
         if (!state.users) {
@@ -44,42 +78,50 @@ const authSlice = createSlice({
           return;
         }
 
-        // Verificar rate limiting para registro
-        const rateLimitCheck = checkRateLimit("REGISTER_ATTEMPTS", username);
-        if (!rateLimitCheck.allowed) {
-          state.error = rateLimitCheck.message;
-          recordAttempt("REGISTER_ATTEMPTS", username, false);
-          return;
-        }
-
         // Agregar nuevo usuario
         const newUser = {
           id: nanoid(),
           fullName,
           username,
           password: hashPassword(password, nanoid()), // Contraseña hasheada con salt único
+          role: role || "user",
+          email: "",
+          isActive: true,
           securityQuestion: "¿Cuál es el nombre de tu primera mascota?",
           securityAnswer: encryptData(securityAnswer), // Respuesta encriptada
           createdAt: new Date().toISOString(),
+          createdBy: createdBy,
         };
 
         state.users.push(newUser);
-        state.currentUser = newUser;
-        state.isAuthenticated = true;
         state.error = null;
-        state.success = "Usuario registrado exitosamente";
+        state.success = "Usuario creado exitosamente";
 
-        // Log de auditoría y limpiar intentos
+        // Log de auditoría
         logAuditEvent(AUDIT_EVENTS.REGISTER, {
           username: newUser.username,
           fullName: newUser.fullName,
+          role: newUser.role,
+          createdBy: createdBy,
         });
-        recordAttempt("REGISTER_ATTEMPTS", username, true);
-        clearAttempts("REGISTER_ATTEMPTS", username);
       },
-      prepare({ fullName, username, password, securityAnswer }) {
+      prepare({
+        fullName,
+        username,
+        password,
+        securityAnswer,
+        role,
+        createdBy,
+      }) {
         return {
-          payload: { fullName, username, password, securityAnswer },
+          payload: {
+            fullName,
+            username,
+            password,
+            securityAnswer,
+            role,
+            createdBy,
+          },
         };
       },
     },
@@ -216,6 +258,151 @@ const authSlice = createSlice({
       },
     },
 
+    // Editar usuario (solo admin)
+    editUser: {
+      reducer(state, action) {
+        const { userId, updates, editedBy } = action.payload;
+
+        // Verificar que solo un admin puede editar usuarios
+        if (
+          !editedBy ||
+          !state.users.find((u) => u.id === editedBy && u.role === "admin")
+        ) {
+          state.error = "Solo los administradores pueden editar usuarios";
+          return;
+        }
+
+        const user = state.users.find((u) => u.id === userId);
+        if (!user) {
+          state.error = "Usuario no encontrado";
+          return;
+        }
+
+        // Proteger al admin por defecto
+        if (user.id === "admin-default" && updates.role !== "admin") {
+          state.error =
+            "No se puede cambiar el rol del administrador por defecto";
+          return;
+        }
+
+        // Actualizar usuario
+        Object.assign(user, updates);
+        user.modifiedBy = editedBy;
+        user.modifiedAt = new Date().toISOString();
+
+        state.error = null;
+        state.success = "Usuario actualizado correctamente";
+
+        // Log de auditoría
+        logAuditEvent(AUDIT_EVENTS.USER_UPDATED, {
+          userId,
+          updates,
+          editedBy,
+        });
+      },
+      prepare({ userId, updates, editedBy }) {
+        return { payload: { userId, updates, editedBy } };
+      },
+    },
+
+    // Eliminar usuario (solo admin)
+    deleteUser: {
+      reducer(state, action) {
+        const { userId, deletedBy } = action.payload;
+
+        // Verificar que solo un admin puede eliminar usuarios
+        if (
+          !deletedBy ||
+          !state.users.find((u) => u.id === deletedBy && u.role === "admin")
+        ) {
+          state.error = "Solo los administradores pueden eliminar usuarios";
+          return;
+        }
+
+        const user = state.users.find((u) => u.id === userId);
+        if (!user) {
+          state.error = "Usuario no encontrado";
+          return;
+        }
+
+        // Proteger al admin por defecto
+        if (user.id === "admin-default") {
+          state.error = "No se puede eliminar al administrador por defecto";
+          return;
+        }
+
+        // No permitir que un usuario se elimine a sí mismo
+        if (userId === deletedBy) {
+          state.error = "No puedes eliminar tu propia cuenta";
+          return;
+        }
+
+        // Eliminar usuario
+        state.users = state.users.filter((u) => u.id !== userId);
+        state.error = null;
+        state.success = "Usuario eliminado correctamente";
+
+        // Log de auditoría
+        logAuditEvent(AUDIT_EVENTS.USER_DELETED, {
+          userId,
+          username: user.username,
+          deletedBy,
+        });
+      },
+      prepare({ userId, deletedBy }) {
+        return { payload: { userId, deletedBy } };
+      },
+    },
+
+    // Activar/Desactivar usuario (solo admin)
+    toggleUserStatus: {
+      reducer(state, action) {
+        const { userId, toggledBy } = action.payload;
+
+        // Verificar que solo un admin puede cambiar estado de usuarios
+        if (
+          !toggledBy ||
+          !state.users.find((u) => u.id === toggledBy && u.role === "admin")
+        ) {
+          state.error =
+            "Solo los administradores pueden cambiar el estado de usuarios";
+          return;
+        }
+
+        const user = state.users.find((u) => u.id === userId);
+        if (!user) {
+          state.error = "Usuario no encontrado";
+          return;
+        }
+
+        // Proteger al admin por defecto
+        if (user.id === "admin-default") {
+          state.error = "No se puede desactivar al administrador por defecto";
+          return;
+        }
+
+        // Cambiar estado
+        user.isActive = !user.isActive;
+        user.modifiedBy = toggledBy;
+        user.modifiedAt = new Date().toISOString();
+
+        state.error = null;
+        state.success = `Usuario ${
+          user.isActive ? "activado" : "desactivado"
+        } correctamente`;
+
+        // Log de auditoría
+        logAuditEvent(AUDIT_EVENTS.USER_STATUS_CHANGED, {
+          userId,
+          newStatus: user.isActive,
+          toggledBy,
+        });
+      },
+      prepare({ userId, toggledBy }) {
+        return { payload: { userId, toggledBy } };
+      },
+    },
+
     // Limpiar mensajes
     clearMessages: (state) => {
       state.error = null;
@@ -224,6 +411,14 @@ const authSlice = createSlice({
   },
 });
 
-export const { register, login, logout, recoveryPassword, clearMessages } =
-  authSlice.actions;
+export const {
+  register,
+  login,
+  logout,
+  recoveryPassword,
+  editUser,
+  deleteUser,
+  toggleUserStatus,
+  clearMessages,
+} = authSlice.actions;
 export default authSlice.reducer;
