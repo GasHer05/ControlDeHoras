@@ -3,10 +3,11 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "../components/auth/LoginForm.jsx";
 import RegisterForm from "../components/auth/RegisterForm.jsx";
+import RecoveryForm from "../components/auth/RecoveryForm.jsx";
 
 // Página de autenticación que maneja login y registro
 function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [authMode, setAuthMode] = useState("login"); // "login", "register", "recovery"
   const { isAuthenticated } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
@@ -17,20 +18,28 @@ function AuthPage() {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleSwitchToRegister = () => {
-    setIsLogin(false);
+  const handleSwitchToRegister = (mode) => {
+    if (mode === "recovery") {
+      setAuthMode("recovery");
+    } else {
+      setAuthMode("register");
+    }
   };
 
   const handleSwitchToLogin = () => {
-    setIsLogin(true);
+    setAuthMode("login");
   };
 
   return (
     <div>
-      {isLogin ? (
+      {authMode === "login" && (
         <LoginForm onSwitchToRegister={handleSwitchToRegister} />
-      ) : (
+      )}
+      {authMode === "register" && (
         <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
+      )}
+      {authMode === "recovery" && (
+        <RecoveryForm onSwitchToLogin={handleSwitchToLogin} />
       )}
     </div>
   );

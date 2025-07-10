@@ -16,7 +16,7 @@ const authSlice = createSlice({
     // Registrar nuevo usuario
     register: {
       reducer(state, action) {
-        const { username, password } = action.payload;
+        const { fullName, username, password, securityAnswer } = action.payload;
 
         // Asegurar que users existe
         if (!state.users) {
@@ -35,8 +35,11 @@ const authSlice = createSlice({
         // Agregar nuevo usuario
         const newUser = {
           id: nanoid(),
+          fullName,
           username,
           password, // En producción debería estar encriptada
+          securityQuestion: "¿Cuál es el nombre de tu primera mascota?",
+          securityAnswer, // En producción debería estar encriptada
           createdAt: new Date().toISOString(),
         };
 
@@ -46,9 +49,9 @@ const authSlice = createSlice({
         state.error = null;
         state.success = "Usuario registrado exitosamente";
       },
-      prepare({ username, password }) {
+      prepare({ fullName, username, password, securityAnswer }) {
         return {
-          payload: { username, password },
+          payload: { fullName, username, password, securityAnswer },
         };
       },
     },
@@ -95,6 +98,33 @@ const authSlice = createSlice({
       state.success = "Sesión cerrada correctamente";
     },
 
+    // Recuperar contraseña
+    recoveryPassword: {
+      reducer(state, action) {
+        const { username, newPassword } = action.payload;
+
+        // Buscar usuario
+        const user = state.users.find((u) => u.username === username);
+
+        if (!user) {
+          state.error = "Usuario no encontrado";
+          return;
+        }
+
+        // Actualizar contraseña
+        user.password = newPassword; // En producción debería estar encriptada
+        user.updatedAt = new Date().toISOString();
+
+        state.error = null;
+        state.success = "Contraseña actualizada correctamente";
+      },
+      prepare({ username, newPassword }) {
+        return {
+          payload: { username, newPassword },
+        };
+      },
+    },
+
     // Limpiar mensajes
     clearMessages: (state) => {
       state.error = null;
@@ -103,5 +133,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { register, login, logout, clearMessages } = authSlice.actions;
+export const { register, login, logout, recoveryPassword, clearMessages } =
+  authSlice.actions;
 export default authSlice.reducer;

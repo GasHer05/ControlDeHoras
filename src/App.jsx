@@ -39,7 +39,9 @@ function App() {
                 <Link to="/reportes">Reportes</Link>
               </li>
               <li className="user-info">
-                <span>Usuario: {currentUser?.username}</span>
+                <span>
+                  Usuario: {currentUser?.fullName || currentUser?.username}
+                </span>
                 <button onClick={handleLogout} className="logout-btn">
                   Cerrar Sesión
                 </button>

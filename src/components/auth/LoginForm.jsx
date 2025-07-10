@@ -93,6 +93,15 @@ function LoginForm({ onSwitchToRegister }) {
             ¿No tienes cuenta?{" "}
             <button onClick={onSwitchToRegister}>Registrarse</button>
           </p>
+          <p>
+            ¿Olvidaste tu contraseña?{" "}
+            <button
+              type="button"
+              onClick={() => onSwitchToRegister("recovery")}
+            >
+              Recuperar
+            </button>
+          </p>
         </div>
       </div>
     </div>

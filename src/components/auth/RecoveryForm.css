@@ -1,8 +1,4 @@
-/* RegisterForm.css - Estilos para el formulario de registro */
-
-/* Reutiliza los mismos estilos que LoginForm.css */
-
-/* Estilos específicos para pregunta de seguridad */
+/* Estilos específicos para el formulario de recuperación */
 .security-question {
   background: #f8f9fa;
   padding: 0.8rem;
@@ -13,14 +9,14 @@
   color: #495057;
 }
 
-/* Información del nombre de usuario */
-.username-info {
-  margin-top: 0.3rem;
+.password-requirements {
+  margin-top: 0.5rem;
   color: #6c757d;
   font-size: 0.85rem;
+  line-height: 1.3;
 }
 
-.username-info small {
+.password-requirements small {
   color: #6c757d;
 }
 
@@ -31,7 +27,7 @@
     font-size: 0.9rem;
   }
   
-  .username-info {
+  .password-requirements {
     font-size: 0.8rem;
   }
 } 

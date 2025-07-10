@@ -14,7 +14,10 @@ import {
 // Página principal para gestión de clientes
 function ClientesPage() {
   const clientes = useSelector((state) => state.clientes);
-  const usuario = useSelector((state) => state.auth.currentUser?.username);
+  const usuario = useSelector(
+    (state) =>
+      state.auth.currentUser?.fullName || state.auth.currentUser?.username
+  );
   const dispatch = useDispatch();
 
   // Estado para edición

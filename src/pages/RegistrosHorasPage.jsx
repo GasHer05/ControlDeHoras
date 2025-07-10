@@ -13,7 +13,10 @@ import {
 function RegistrosHorasPage() {
   const registros = useSelector((state) => state.registrosHoras);
   const clientes = useSelector((state) => state.clientes);
-  const usuario = useSelector((state) => state.auth.currentUser?.username);
+  const usuario = useSelector(
+    (state) =>
+      state.auth.currentUser?.fullName || state.auth.currentUser?.username
+  );
   const dispatch = useDispatch();
 
   // Estado para edición
