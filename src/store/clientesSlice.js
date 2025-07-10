@@ -1,4 +1,5 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
+import { encryptClientData, decryptClientData } from "../utils/encryption";
 
 // Modelo de Cliente: { id, nombre, contacto, valorHora, tipoDescuento, valorDescuento, creadoPor, fechaCreacion, modificadoPor, fechaModificacion }
 
@@ -10,11 +11,16 @@ const clientesSlice = createSlice({
   reducers: {
     agregarCliente: {
       reducer(state, action) {
-        state.push(action.payload);
+        // Encriptar datos sensibles antes de guardar
+        const encryptedPayload = encryptClientData(action.payload);
+        state.push(encryptedPayload);
       },
       prepare({
         nombre,
-        contacto,
+        email,
+        telefono,
+        direccion,
+        identificadorFiscal,
         valorHora,
         usuario,
         tipoDescuento = "",
@@ -25,7 +31,10 @@ const clientesSlice = createSlice({
           payload: {
             id: nanoid(),
             nombre,
-            contacto,
+            email,
+            telefono,
+            direccion,
+            identificadorFiscal,
             valorHora,
             tipoDescuento,
             valorDescuento,
@@ -41,7 +50,10 @@ const clientesSlice = createSlice({
       const {
         id,
         nombre,
-        contacto,
+        email,
+        telefono,
+        direccion,
+        identificadorFiscal,
         valorHora,
         usuario,
         tipoDescuento = "",
@@ -49,11 +61,19 @@ const clientesSlice = createSlice({
       } = action.payload;
       const cliente = state.find((c) => c.id === id);
       if (cliente) {
-        cliente.nombre = nombre;
-        cliente.contacto = contacto;
-        cliente.valorHora = valorHora;
-        cliente.tipoDescuento = tipoDescuento;
-        cliente.valorDescuento = valorDescuento;
+        // Encriptar datos sensibles antes de actualizar
+        const updatedData = encryptClientData({
+          nombre,
+          email,
+          telefono,
+          direccion,
+          identificadorFiscal,
+          valorHora,
+          tipoDescuento,
+          valorDescuento,
+        });
+
+        Object.assign(cliente, updatedData);
         cliente.modificadoPor = usuario;
         cliente.fechaModificacion = new Date().toISOString();
       }

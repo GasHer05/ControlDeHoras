@@ -10,10 +10,11 @@ import {
   editarCliente,
   eliminarCliente,
 } from "../store/clientesSlice";
+import { selectClientesDecrypted } from "../utils/selectors";
 
 // Página principal para gestión de clientes
 function ClientesPage() {
-  const clientes = useSelector((state) => state.clientes);
+  const clientes = useSelector(selectClientesDecrypted);
   const usuario = useSelector(
     (state) =>
       state.auth.currentUser?.fullName || state.auth.currentUser?.username

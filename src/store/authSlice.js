@@ -1,4 +1,10 @@
 import { createSlice, nanoid } from "@reduxjs/toolkit";
+import {
+  hashPassword,
+  verifyPassword,
+  encryptData,
+  decryptData,
+} from "../utils/encryption";
 
 // Estado inicial para autenticación
 const initialState = {
@@ -37,9 +43,9 @@ const authSlice = createSlice({
           id: nanoid(),
           fullName,
           username,
-          password, // En producción debería estar encriptada
+          password: hashPassword(password), // Contraseña hasheada
           securityQuestion: "¿Cuál es el nombre de tu primera mascota?",
-          securityAnswer, // En producción debería estar encriptada
+          securityAnswer: encryptData(securityAnswer), // Respuesta encriptada
           createdAt: new Date().toISOString(),
         };
 
@@ -67,11 +73,17 @@ const authSlice = createSlice({
         }
 
         // Buscar usuario
-        const user = state.users.find(
-          (u) => u.username === username && u.password === password
-        );
+        const user = state.users.find((u) => u.username === username);
 
         if (!user) {
+          state.error = "Usuario o contraseña incorrectos";
+          state.isAuthenticated = false;
+          state.currentUser = null;
+          return;
+        }
+
+        // Verificar contraseña
+        if (!verifyPassword(password, user.password)) {
           state.error = "Usuario o contraseña incorrectos";
           state.isAuthenticated = false;
           state.currentUser = null;
@@ -112,7 +124,7 @@ const authSlice = createSlice({
         }
 
         // Actualizar contraseña
-        user.password = newPassword; // En producción debería estar encriptada
+        user.password = hashPassword(newPassword); // Contraseña hasheada
         user.updatedAt = new Date().toISOString();
 
         state.error = null;
