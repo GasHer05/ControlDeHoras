@@ -53,8 +53,15 @@ function exportarPDF({ cliente, registros, estadisticas }) {
   doc.setFontSize(12);
   doc.text(`Cliente: ${cliente.nombre}`, 14, y);
   doc.setFontSize(10);
-  doc.text(`Contacto: ${cliente.contacto || "-"}`, 14, y + 6);
-  doc.text(`Valor por hora: $${cliente.valorHora}`, 14, y + 12);
+  doc.text(`Email: ${cliente.email || "-"}`, 14, y + 6);
+  doc.text(`Teléfono: ${cliente.telefono || "-"}`, 14, y + 12);
+  doc.text(`Dirección: ${cliente.direccion || "-"}`, 14, y + 18);
+  doc.text(
+    `Identificador Fiscal: ${cliente.identificadorFiscal || "-"}`,
+    14,
+    y + 24
+  );
+  doc.text(`Valor por hora: $${cliente.valorHora}`, 14, y + 30);
   if (cliente.tipoDescuento && cliente.valorDescuento) {
     doc.text(
       `Descuento: ${
@@ -63,12 +70,12 @@ function exportarPDF({ cliente, registros, estadisticas }) {
           : "$" + cliente.valorDescuento
       }`,
       14,
-      y + 18
+      y + 36
     );
   }
 
   // Estadísticas
-  y += 28;
+  y += 42;
   doc.setFontSize(11);
   doc.text(`Total Horas: ${estadisticas.totalHoras}`, 14, y);
   doc.text(`Total Facturado: $${estadisticas.totalMonto}`, 70, y);

@@ -20,7 +20,13 @@ function ClienteItem({ cliente, onEdit, onDelete }) {
     <div className="cliente-item">
       <div>
         <strong>{cliente.nombre}</strong> <br />
-        <span>Contacto: {cliente.contacto || "-"}</span> <br />
+        <span>Email: {cliente.email || "-"}</span> <br />
+        <span>Teléfono: {cliente.telefono || "-"}</span> <br />
+        <span>Dirección: {cliente.direccion || "-"}</span> <br />
+        <span>
+          Identificador Fiscal: {cliente.identificadorFiscal || "-"}
+        </span>{" "}
+        <br />
         <span>Valor por hora: ${cliente.valorHora}</span>
         <br />
         {renderDescuento(cliente.tipoDescuento, cliente.valorDescuento)}

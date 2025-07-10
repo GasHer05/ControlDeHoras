@@ -9,6 +9,23 @@
   margin: 0 auto;
 }
 
+/* Responsive design */
+@media (max-width: 768px) {
+  .registro-hora-form {
+    max-width: 100%;
+    padding: 1rem 0.8rem;
+  }
+  
+  .registro-hora-form .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .registro-hora-form .form-actions button {
+    width: 100%;
+  }
+}
+
 .registro-hora-form label {
   margin-bottom: 0.3rem;
 }

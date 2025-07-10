@@ -133,20 +133,34 @@
   .reporte-header {
     flex-direction: column;
     align-items: flex-start;
+    padding: 1rem;
   }
   
   .estadisticas-cliente {
     justify-content: space-between;
     width: 100%;
+    gap: 1rem;
+  }
+  
+  .estadisticas-cliente .stat {
+    flex: 1;
+    min-width: 120px;
   }
   
   .registro-item {
     grid-template-columns: 1fr;
     gap: 0.5rem;
+    padding: 0.8rem;
   }
   
   .registro-horas,
   .registro-monto {
     text-align: left;
+  }
+  
+  .toggle-detalles,
+  .exportar-pdf-btn {
+    width: 100%;
+    margin-top: 0.5rem;
   }
 } 

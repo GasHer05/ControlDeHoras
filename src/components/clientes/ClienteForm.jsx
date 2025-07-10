@@ -8,7 +8,10 @@ import "./ClienteForm.css";
 // - onCancel: función para cancelar la edición (opcional)
 function ClienteForm({ onSubmit, initialData = null, onCancel }) {
   const [nombre, setNombre] = useState("");
-  const [contacto, setContacto] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [identificadorFiscal, setIdentificadorFiscal] = useState("");
   const [valorHora, setValorHora] = useState("");
   const [tipoDescuento, setTipoDescuento] = useState("");
   const [valorDescuento, setValorDescuento] = useState("");
@@ -16,7 +19,10 @@ function ClienteForm({ onSubmit, initialData = null, onCancel }) {
   useEffect(() => {
     if (initialData) {
       setNombre(initialData.nombre || "");
-      setContacto(initialData.contacto || "");
+      setEmail(initialData.email || "");
+      setTelefono(initialData.telefono || "");
+      setDireccion(initialData.direccion || "");
+      setIdentificadorFiscal(initialData.identificadorFiscal || "");
       setValorHora(initialData.valorHora || "");
       setTipoDescuento(initialData.tipoDescuento || "");
       setValorDescuento(initialData.valorDescuento || "");
@@ -28,14 +34,20 @@ function ClienteForm({ onSubmit, initialData = null, onCancel }) {
     if (!nombre || !valorHora) return; // Validación básica
     onSubmit({
       nombre,
-      contacto,
+      email,
+      telefono,
+      direccion,
+      identificadorFiscal,
       valorHora: Number(valorHora),
       tipoDescuento,
       valorDescuento: valorDescuento ? Number(valorDescuento) : "",
     });
     if (!initialData) {
       setNombre("");
-      setContacto("");
+      setEmail("");
+      setTelefono("");
+      setDireccion("");
+      setIdentificadorFiscal("");
       setValorHora("");
       setTipoDescuento("");
       setValorDescuento("");
@@ -51,14 +63,43 @@ function ClienteForm({ onSubmit, initialData = null, onCancel }) {
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           required
+          placeholder="Adrea Perez"
         />
       </div>
       <div>
-        <label>Datos de contacto:</label>
+        <label>Correo electrónico:</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="ejemplo@email.com"
+        />
+      </div>
+      <div>
+        <label>Teléfono:</label>
+        <input
+          type="tel"
+          value={telefono}
+          onChange={(e) => setTelefono(e.target.value)}
+          placeholder="+598 1234 5678"
+        />
+      </div>
+      <div>
+        <label>Dirección:</label>
         <input
           type="text"
-          value={contacto}
-          onChange={(e) => setContacto(e.target.value)}
+          value={direccion}
+          onChange={(e) => setDireccion(e.target.value)}
+          placeholder="Dirección completa"
+        />
+      </div>
+      <div>
+        <label>Identificador Fiscal:</label>
+        <input
+          type="text"
+          value={identificadorFiscal}
+          onChange={(e) => setIdentificadorFiscal(e.target.value)}
+          placeholder="RUT o identificación fiscal"
         />
       </div>
       <div>

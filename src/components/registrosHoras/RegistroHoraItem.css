@@ -11,6 +11,26 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
+/* Responsive design */
+@media (max-width: 768px) {
+  .registro-hora-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .registro-hora-item .item-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .registro-hora-item .item-actions button {
+    flex: 1;
+    margin: 0 0.2rem;
+  }
+}
+
 .registro-hora-item .item-actions {
   display: flex;
   gap: 0.7rem;

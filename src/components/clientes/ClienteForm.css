@@ -9,6 +9,23 @@
   margin: 0 auto;
 }
 
+/* Responsive design */
+@media (max-width: 768px) {
+  .cliente-form {
+    max-width: 100%;
+    padding: 1rem 0.8rem;
+  }
+  
+  .cliente-form .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .cliente-form .form-actions button {
+    width: 100%;
+  }
+}
+
 .cliente-form label {
   margin-bottom: 0.3rem;
 }
