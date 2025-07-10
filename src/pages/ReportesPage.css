@@ -1,0 +1,91 @@
+/* ReportesPage.css - Estilos para la página de reportes */
+
+.reportes-page {
+  padding: 1rem;
+}
+
+.filtros-section {
+  background: #f3f6fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.filtros-section h3 {
+  margin-bottom: 1rem;
+  color: #1a2233;
+}
+
+.filtros-container {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.filtro-cliente {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-width: 200px;
+}
+
+.filtro-cliente label {
+  margin-bottom: 0.3rem;
+  font-size: 1rem;
+  color: #1a2233;
+  font-weight: 500;
+}
+
+.filtro-cliente select {
+  min-width: 200px;
+}
+
+.estadisticas-generales {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e0e4ea;
+  margin-bottom: 2rem;
+}
+
+.estadisticas-generales h3 {
+  margin-bottom: 1rem;
+  color: #1a2233;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f7f8fa;
+  border-radius: 6px;
+  border: 1px solid #e0e4ea;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #1a2233;
+  font-size: 1.1rem;
+}
+
+.reportes-clientes {
+  margin-top: 2rem;
+}
+
+.reportes-clientes h3 {
+  margin-bottom: 1rem;
+  color: #1a2233;
+} 

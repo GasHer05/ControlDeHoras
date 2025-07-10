@@ -1,0 +1,16 @@
+/* FiltroFechas.css - Estilos para el filtro de fechas */
+
+.filtro-fechas {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.filtro-fechas label {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  color: #1a2233;
+  font-weight: 500;
+} 

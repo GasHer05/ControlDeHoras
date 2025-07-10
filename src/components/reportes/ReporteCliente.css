@@ -1,0 +1,152 @@
+/* ReporteCliente.css - Estilos para el reporte de cliente */
+
+.reporte-cliente {
+  background: #fff;
+  border: 1px solid #e0e4ea;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.reporte-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f7f8fa;
+  border-bottom: 1px solid #e0e4ea;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.cliente-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #1a2233;
+  font-size: 1.2rem;
+}
+
+.valor-hora {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.estadisticas-cliente {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.estadisticas-cliente .stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.estadisticas-cliente .stat-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-bottom: 0.2rem;
+}
+
+.estadisticas-cliente .stat-value {
+  font-weight: 600;
+  color: #1a2233;
+  font-size: 1rem;
+}
+
+.toggle-detalles {
+  background: #6cb4ee;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.toggle-detalles:hover {
+  background: #5a9fd8;
+}
+
+.registros-detalle {
+  padding: 1.5rem;
+}
+
+.registros-detalle h5 {
+  margin: 0 0 1rem 0;
+  color: #1a2233;
+}
+
+.registros-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.registro-item {
+  display: grid;
+  grid-template-columns: 1fr 80px 100px 1fr;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f7f8fa;
+  border-radius: 5px;
+  border: 1px solid #e0e4ea;
+  align-items: center;
+}
+
+.registro-fecha {
+  font-weight: 500;
+  color: #1a2233;
+}
+
+.registro-horas {
+  text-align: center;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.registro-monto {
+  text-align: center;
+  font-weight: 600;
+  color: #1a2233;
+}
+
+.registro-descripcion {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.auditoria-cliente {
+  margin-bottom: 1.2rem;
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.registro-auditoria {
+  margin-top: 0.3rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .reporte-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .estadisticas-cliente {
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .registro-item {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  .registro-horas,
+  .registro-monto {
+    text-align: left;
+  }
+} 

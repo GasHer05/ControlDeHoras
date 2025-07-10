@@ -1,0 +1,8 @@
+/* RegistroHoraList.css - Estilos para el listado de registros de horas */
+
+.registro-hora-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+} 

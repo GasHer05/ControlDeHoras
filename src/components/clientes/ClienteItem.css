@@ -1,0 +1,25 @@
+/* ClienteItem.css - Estilos para el item de cliente */
+
+.cliente-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f7f8fa;
+  border: 1px solid #e0e4ea;
+  border-radius: 7px;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.cliente-item .item-actions {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.descuento-info {
+  color: #16a34a;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-top: 0.2rem;
+  display: inline-block;
+} 

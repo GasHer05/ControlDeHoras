@@ -1,0 +1,120 @@
+/* main.css - Estilos globales minimalistas y profesionales */
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  background: #f7f8fa;
+  color: #222;
+  min-height: 100vh;
+}
+
+.app-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border-radius: 10px;
+}
+
+.navbar {
+  background: #222e3a;
+  padding: 1rem 0.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+.user-info {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info span {
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  background: #e74c3c;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.logout-btn:hover {
+  background: #c0392b;
+}
+
+.navbar a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: color 0.2s;
+}
+
+.navbar a:hover {
+  color: #6cb4ee;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #1a2233;
+}
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  border: none;
+  background: #222e3a;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #6cb4ee;
+  color: #222e3a;
+}
+
+input, select {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: 5px;
+  border: 1px solid #cfd8dc;
+  background: #f7f8fa;
+  margin-top: 0.2rem;
+  margin-bottom: 0.7rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+label {
+  font-size: 1rem;
+  color: #1a2233;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+} 

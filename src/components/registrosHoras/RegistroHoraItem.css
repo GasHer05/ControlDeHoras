@@ -1,0 +1,17 @@
+/* RegistroHoraItem.css - Estilos para el item de registro de horas */
+
+.registro-hora-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f7f8fa;
+  border: 1px solid #e0e4ea;
+  border-radius: 7px;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.registro-hora-item .item-actions {
+  display: flex;
+  gap: 0.7rem;
+} 

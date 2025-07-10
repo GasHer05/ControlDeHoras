@@ -1,0 +1,23 @@
+/* RegistroHoraForm.css - Estilos para el formulario de registro de horas */
+
+.registro-hora-form {
+  background: #f3f6fa;
+  padding: 1.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.registro-hora-form label {
+  margin-bottom: 0.3rem;
+}
+
+.registro-hora-form input,
+.registro-hora-form select {
+  margin-bottom: 1rem;
+}
+
+.registro-hora-form .form-actions {
+  justify-content: flex-end;
+} 
