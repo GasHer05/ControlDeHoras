@@ -23,9 +23,10 @@ export const decryptData = (encryptedData) => {
 };
 
 // Función para generar hash de contraseña (one-way)
-export const hashPassword = (password) => {
+export const hashPassword = (password, userId = null) => {
   try {
-    const salt = getPasswordSalt();
+    // Si hay userId, usar salt único por usuario
+    const salt = userId ? `${getPasswordSalt()}_${userId}` : getPasswordSalt();
     return CryptoJS.SHA256(password + salt).toString();
   } catch (error) {
     console.error("Error al generar hash:", error);
@@ -34,9 +35,10 @@ export const hashPassword = (password) => {
 };
 
 // Función para verificar contraseña
-export const verifyPassword = (password, hashedPassword) => {
+export const verifyPassword = (password, hashedPassword, userId = null) => {
   try {
-    const salt = getPasswordSalt();
+    // Si hay userId, usar salt único por usuario
+    const salt = userId ? `${getPasswordSalt()}_${userId}` : getPasswordSalt();
     const hashedInput = CryptoJS.SHA256(password + salt).toString();
     return hashedInput === hashedPassword;
   } catch (error) {

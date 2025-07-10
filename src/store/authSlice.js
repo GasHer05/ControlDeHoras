@@ -5,6 +5,12 @@ import {
   encryptData,
   decryptData,
 } from "../utils/encryption";
+import { logAuditEvent, AUDIT_EVENTS } from "../utils/auditLogger";
+import {
+  checkRateLimit,
+  recordAttempt,
+  clearAttempts,
+} from "../utils/rateLimiter";
 
 // Estado inicial para autenticación
 const initialState = {
@@ -38,12 +44,20 @@ const authSlice = createSlice({
           return;
         }
 
+        // Verificar rate limiting para registro
+        const rateLimitCheck = checkRateLimit("REGISTER_ATTEMPTS", username);
+        if (!rateLimitCheck.allowed) {
+          state.error = rateLimitCheck.message;
+          recordAttempt("REGISTER_ATTEMPTS", username, false);
+          return;
+        }
+
         // Agregar nuevo usuario
         const newUser = {
           id: nanoid(),
           fullName,
           username,
-          password: hashPassword(password), // Contraseña hasheada
+          password: hashPassword(password, nanoid()), // Contraseña hasheada con salt único
           securityQuestion: "¿Cuál es el nombre de tu primera mascota?",
           securityAnswer: encryptData(securityAnswer), // Respuesta encriptada
           createdAt: new Date().toISOString(),
@@ -54,6 +68,14 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.error = null;
         state.success = "Usuario registrado exitosamente";
+
+        // Log de auditoría y limpiar intentos
+        logAuditEvent(AUDIT_EVENTS.REGISTER, {
+          username: newUser.username,
+          fullName: newUser.fullName,
+        });
+        recordAttempt("REGISTER_ATTEMPTS", username, true);
+        clearAttempts("REGISTER_ATTEMPTS", username);
       },
       prepare({ fullName, username, password, securityAnswer }) {
         return {
@@ -67,6 +89,14 @@ const authSlice = createSlice({
       reducer(state, action) {
         const { username, password } = action.payload;
 
+        // Verificar rate limiting para login
+        const rateLimitCheck = checkRateLimit("LOGIN_ATTEMPTS", username);
+        if (!rateLimitCheck.allowed) {
+          state.error = rateLimitCheck.message;
+          recordAttempt("LOGIN_ATTEMPTS", username, false);
+          return;
+        }
+
         // Asegurar que users existe
         if (!state.users) {
           state.users = [];
@@ -79,14 +109,24 @@ const authSlice = createSlice({
           state.error = "Usuario o contraseña incorrectos";
           state.isAuthenticated = false;
           state.currentUser = null;
+          recordAttempt("LOGIN_ATTEMPTS", username, false);
+          logAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, {
+            username,
+            reason: "USER_NOT_FOUND",
+          });
           return;
         }
 
         // Verificar contraseña
-        if (!verifyPassword(password, user.password)) {
+        if (!verifyPassword(password, user.password, user.id)) {
           state.error = "Usuario o contraseña incorrectos";
           state.isAuthenticated = false;
           state.currentUser = null;
+          recordAttempt("LOGIN_ATTEMPTS", username, false);
+          logAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, {
+            username,
+            reason: "INVALID_PASSWORD",
+          });
           return;
         }
 
@@ -94,6 +134,14 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.error = null;
         state.success = "Sesión iniciada correctamente";
+
+        // Log de auditoría y limpiar intentos
+        logAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, {
+          username: user.username,
+          fullName: user.fullName,
+        });
+        recordAttempt("LOGIN_ATTEMPTS", username, true);
+        clearAttempts("LOGIN_ATTEMPTS", username);
       },
       prepare({ username, password }) {
         return {
@@ -104,10 +152,19 @@ const authSlice = createSlice({
 
     // Cerrar sesión
     logout: (state) => {
+      const currentUser = state.currentUser;
       state.isAuthenticated = false;
       state.currentUser = null;
       state.error = null;
       state.success = "Sesión cerrada correctamente";
+
+      // Log de auditoría
+      if (currentUser) {
+        logAuditEvent(AUDIT_EVENTS.LOGOUT, {
+          username: currentUser.username,
+          fullName: currentUser.fullName,
+        });
+      }
     },
 
     // Recuperar contraseña
@@ -115,20 +172,42 @@ const authSlice = createSlice({
       reducer(state, action) {
         const { username, newPassword } = action.payload;
 
+        // Verificar rate limiting para recuperación
+        const rateLimitCheck = checkRateLimit("RECOVERY_ATTEMPTS", username);
+        if (!rateLimitCheck.allowed) {
+          state.error = rateLimitCheck.message;
+          recordAttempt("RECOVERY_ATTEMPTS", username, false);
+          return;
+        }
+
         // Buscar usuario
         const user = state.users.find((u) => u.username === username);
 
         if (!user) {
           state.error = "Usuario no encontrado";
+          recordAttempt("RECOVERY_ATTEMPTS", username, false);
+          logAuditEvent(AUDIT_EVENTS.PASSWORD_RECOVERY, {
+            username,
+            success: false,
+            reason: "USER_NOT_FOUND",
+          });
           return;
         }
 
         // Actualizar contraseña
-        user.password = hashPassword(newPassword); // Contraseña hasheada
+        user.password = hashPassword(newPassword, user.id); // Contraseña hasheada con salt único
         user.updatedAt = new Date().toISOString();
 
         state.error = null;
         state.success = "Contraseña actualizada correctamente";
+
+        // Log de auditoría y limpiar intentos
+        logAuditEvent(AUDIT_EVENTS.PASSWORD_RECOVERY, {
+          username: user.username,
+          success: true,
+        });
+        recordAttempt("RECOVERY_ATTEMPTS", username, true);
+        clearAttempts("RECOVERY_ATTEMPTS", username);
       },
       prepare({ username, newPassword }) {
         return {
