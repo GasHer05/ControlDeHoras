@@ -25,7 +25,7 @@ import {
 } from "./config/admin";
 
 // Importar debug temporal
-import "./utils/debugAuth.js";
+// import "./utils/debugAuth.js";
 
 function App() {
   const { isAuthenticated, currentUser } = useSelector((state) => state.auth);
