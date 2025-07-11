@@ -81,6 +81,49 @@
   font-size: 1.1rem;
 }
 
+/* Estilos para información del usuario */
+.user-info-section {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border-left: 4px solid #6cb4ee;
+}
+
+.user-info-section h3 {
+  margin-top: 0;
+  color: #1a2233;
+}
+
+.user-info-section p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+/* Estilos para botones de exportación */
+.export-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-exportar {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  background: #28a745;
+  color: white;
+}
+
+.btn-exportar:hover {
+  background: #218838;
+}
+
 .reportes-clientes {
   margin-top: 2rem;
 }

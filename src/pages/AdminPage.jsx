@@ -12,6 +12,106 @@ import { exportBackup } from "../utils/backupManager";
 import { toast } from "react-toastify";
 import "./AdminPage.css";
 
+// Componente de formulario para editar usuarios
+function EditUserForm({ user, onSubmit, onCancel }) {
+  const [formData, setFormData] = useState({
+    fullName: user.fullName || "",
+    username: user.username || "",
+    role: user.role || "user",
+  });
+  const [errors, setErrors] = useState({});
+
+  // Sincronizar formData cuando cambie el usuario a editar
+  React.useEffect(() => {
+    setFormData({
+      fullName: user.fullName || "",
+      username: user.username || "",
+      role: user.role || "user",
+    });
+  }, [user]);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "El nombre completo es requerido";
+    }
+
+    if (!formData.username.trim()) {
+      newErrors.username = "El nombre de usuario es requerido";
+    } else if (formData.username.length < 3) {
+      newErrors.username =
+        "El nombre de usuario debe tener al menos 3 caracteres";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSubmit(formData);
+    }
+  };
+
+  return (
+    <div className="edit-user-form">
+      <h3>Editar Usuario: {user.username}</h3>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Nombre Completo:</label>
+          <input
+            type="text"
+            value={formData.fullName}
+            onChange={(e) =>
+              setFormData({ ...formData, fullName: e.target.value })
+            }
+            className={errors.fullName ? "error" : ""}
+          />
+          {errors.fullName && (
+            <span className="error-text">{errors.fullName}</span>
+          )}
+        </div>
+
+        <div>
+          <label>Nombre de Usuario:</label>
+          <input
+            type="text"
+            value={formData.username}
+            onChange={(e) =>
+              setFormData({ ...formData, username: e.target.value })
+            }
+            className={errors.username ? "error" : ""}
+          />
+          {errors.username && (
+            <span className="error-text">{errors.username}</span>
+          )}
+        </div>
+
+        <div>
+          <label>Rol:</label>
+          <select
+            value={formData.role}
+            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+          >
+            <option value="user">Usuario</option>
+            <option value="manager">Manager</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+
+        <div className="form-actions">
+          <button type="submit">Guardar Cambios</button>
+          <button type="button" onClick={onCancel}>
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 // Componente de formulario para crear usuarios
 function CreateUserForm({ onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
@@ -286,7 +386,23 @@ function AdminPage() {
   // Editar usuario
   const handleEditUser = (user) => {
     setEditingUser(user);
-    setShowCreateForm(true);
+    setShowCreateForm(false); // No mostrar el formulario de creación
+  };
+
+  // Guardar cambios de edición
+  const handleSaveEdit = (updatedData) => {
+    dispatch(
+      editUser({
+        userId: editingUser.id,
+        updates: updatedData,
+        editedBy: currentUser.id,
+      })
+    );
+
+    if (!error) {
+      setEditingUser(null);
+      toast.success("Usuario actualizado exitosamente");
+    }
   };
 
   // Eliminar usuario
@@ -392,6 +508,14 @@ function AdminPage() {
         <CreateUserForm
           onSubmit={handleCreateUser}
           onCancel={() => setShowCreateForm(false)}
+        />
+      )}
+
+      {editingUser && (
+        <EditUserForm
+          user={editingUser}
+          onSubmit={handleSaveEdit}
+          onCancel={() => setEditingUser(null)}
         />
       )}
 

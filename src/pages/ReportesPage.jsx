@@ -2,12 +2,18 @@ import React, { useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import ReporteCliente from "../components/reportes/ReporteCliente.jsx";
 import FiltroFechas from "../components/comunes/FiltroFechas.jsx";
+import { isAdminOrManager, hasPermission } from "../config/admin";
 import "./ReportesPage.css";
 
 // Página principal de reportes
 function ReportesPage() {
   const clientes = useSelector((state) => state.clientes);
   const registros = useSelector((state) => state.registrosHoras);
+  const currentUser = useSelector((state) => state.auth.currentUser);
+
+  // Verificar permisos
+  const canExportData = hasPermission(currentUser, "EXPORT_DATA");
+  const isUserAdminOrManager = isAdminOrManager(currentUser);
 
   const [filtro, setFiltro] = useState({ fechaInicio: "", fechaFin: "" });
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
@@ -32,9 +38,68 @@ function ReportesPage() {
     return { totalHoras, totalMonto, totalRegistros };
   }, [registrosFiltrados]);
 
+  // Función para exportar reporte
+  const exportarReporte = () => {
+    const reporteData = {
+      fecha: new Date().toISOString(),
+      filtros: filtro,
+      estadisticas: estadisticasGenerales,
+      registros: registrosFiltrados,
+      clienteSeleccionado: clienteSeleccionado,
+    };
+
+    const dataStr = JSON.stringify(reporteData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `reporte_${new Date().toISOString().split("T")[0]}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Función para exportar datos
+  const exportarDatos = () => {
+    const datosExport = {
+      fecha: new Date().toISOString(),
+      registros: registrosFiltrados,
+      clientes: clientes,
+      estadisticas: estadisticasGenerales,
+    };
+
+    const dataStr = JSON.stringify(datosExport, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `datos_export_${
+      new Date().toISOString().split("T")[0]
+    }.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="reportes-page">
       <h1>Reportes</h1>
+
+      {/* Información del usuario para managers */}
+      {isUserAdminOrManager && (
+        <div className="user-info-section">
+          <h3>Información del Usuario</h3>
+          <p>
+            <strong>Usuario:</strong>{" "}
+            {currentUser?.fullName || currentUser?.username}
+          </p>
+          <p>
+            <strong>Rol:</strong> {currentUser?.role}
+          </p>
+          <p>
+            <strong>Permisos:</strong>{" "}
+            {canExportData ? "Puede exportar datos" : "Solo visualización"}
+          </p>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="filtros-section">
@@ -86,6 +151,18 @@ function ReportesPage() {
             </span>
           </div>
         </div>
+
+        {/* Botones de exportación para managers */}
+        {canExportData && (
+          <div className="export-actions">
+            <button onClick={() => exportarReporte()} className="btn-exportar">
+              📊 Exportar Reporte
+            </button>
+            <button onClick={() => exportarDatos()} className="btn-exportar">
+              📋 Exportar Datos
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Reportes por cliente */}

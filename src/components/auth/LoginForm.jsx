@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login, clearMessages } from "../../store/authSlice";
+
 import "./LoginForm.css";
 
 // Componente de formulario de login
@@ -89,10 +90,6 @@ function LoginForm({ onSwitchToRegister }) {
         </form>
 
         <div className="auth-switch">
-          <p>
-            ¿No tienes cuenta?{" "}
-            <button onClick={onSwitchToRegister}>Registrarse</button>
-          </p>
           <p>
             ¿Olvidaste tu contraseña?{" "}
             <button

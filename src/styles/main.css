@@ -94,6 +94,17 @@ html, body {
   font-size: 0.9rem;
 }
 
+.change-password-btn {
+  background: #6cb4ee;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.85rem;
+  margin-right: 0.5rem;
+}
+
+.change-password-btn:hover {
+  background: #5a9fd8;
+}
+
 .logout-btn {
   background: #e74c3c;
   padding: 0.3rem 0.8rem;

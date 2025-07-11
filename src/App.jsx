@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -11,18 +11,37 @@ import { logout } from "./store/authSlice";
 import ClientesPage from "./pages/ClientesPage.jsx";
 import RegistrosHorasPage from "./pages/RegistrosHorasPage.jsx";
 import ReportesPage from "./pages/ReportesPage.jsx";
+import AuditoriaPage from "./pages/AuditoriaPage.jsx";
 import AdminPage from "./pages/AdminPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
+import ChangePasswordForm from "./components/auth/ChangePasswordForm.jsx";
 import "./styles/main.css";
-import { isAdmin, hasPermission } from "./config/admin";
+import {
+  isAdmin,
+  isManager,
+  isAdminOrManager,
+  hasPermission,
+} from "./config/admin";
+
+// Importar debug temporal
+import "./utils/debugAuth.js";
 
 function App() {
   const { isAuthenticated, currentUser } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const handleLogout = () => {
     dispatch(logout());
+  };
+
+  const handleChangePassword = () => {
+    setShowChangePassword(true);
+  };
+
+  const handleCloseChangePassword = () => {
+    setShowChangePassword(false);
   };
 
   return (
@@ -40,6 +59,11 @@ function App() {
               <li>
                 <Link to="/reportes">Reportes</Link>
               </li>
+              {isAdminOrManager(currentUser) && (
+                <li>
+                  <Link to="/auditoria">Auditoría</Link>
+                </li>
+              )}
               {isAdmin(currentUser) && (
                 <li>
                   <Link to="/admin">Administración</Link>
@@ -49,6 +73,12 @@ function App() {
                 <span>
                   Usuario: {currentUser?.fullName || currentUser?.username}
                 </span>
+                <button
+                  onClick={handleChangePassword}
+                  className="change-password-btn"
+                >
+                  🔐 Cambiar Contraseña
+                </button>
                 <button onClick={handleLogout} className="logout-btn">
                   Cerrar Sesión
                 </button>
@@ -84,6 +114,14 @@ function App() {
               }
             />
             <Route
+              path="/auditoria"
+              element={
+                <ProtectedRoute>
+                  <AuditoriaPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin"
               element={
                 <ProtectedRoute>
@@ -95,6 +133,11 @@ function App() {
             <Route path="*" element={<Navigate to="/auth" replace />} />
           </Routes>
         </main>
+
+        {/* Modal de cambio de contraseña */}
+        {showChangePassword && (
+          <ChangePasswordForm onClose={handleCloseChangePassword} />
+        )}
       </div>
     </Router>
   );

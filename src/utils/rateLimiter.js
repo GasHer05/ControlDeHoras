@@ -27,6 +27,14 @@ const RATE_LIMIT_CONFIG = {
 // Almacenamiento de intentos
 const getAttemptsKey = (type, identifier) => `rate_limit_${type}_${identifier}`;
 
+// Función para limpiar TODOS los rate limits (función de emergencia)
+export const clearAllRateLimits = () => {
+  const keys = Object.keys(localStorage);
+  const rateLimitKeys = keys.filter((key) => key.startsWith("rate_limit_"));
+  rateLimitKeys.forEach((key) => localStorage.removeItem(key));
+  console.log("Todos los rate limits han sido limpiados");
+};
+
 // Función para verificar si una acción está permitida
 export const checkRateLimit = (type, identifier) => {
   const config = RATE_LIMIT_CONFIG[type];

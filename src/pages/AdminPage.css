@@ -79,7 +79,8 @@
 }
 
 /* Formulario de crear usuario */
-.create-user-form {
+.create-user-form,
+.edit-user-form {
   background: #f8f9fa;
   border: 1px solid #e9ecef;
   border-radius: 8px;
@@ -88,30 +89,36 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.create-user-form h3 {
+.create-user-form h3,
+.edit-user-form h3 {
   color: #2c3e50;
   margin-bottom: 1.5rem;
 }
 
-.create-user-form form {
+.create-user-form form,
+.edit-user-form form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1rem;
 }
 
-.create-user-form div {
+.create-user-form div,
+.edit-user-form div {
   display: flex;
   flex-direction: column;
 }
 
-.create-user-form label {
+.create-user-form label,
+.edit-user-form label {
   font-weight: 500;
   margin-bottom: 0.5rem;
   color: #495057;
 }
 
 .create-user-form input,
-.create-user-form select {
+.create-user-form select,
+.edit-user-form input,
+.edit-user-form select {
   padding: 0.8rem;
   border: 1px solid #ced4da;
   border-radius: 4px;
@@ -119,13 +126,16 @@
 }
 
 .create-user-form input:focus,
-.create-user-form select:focus {
+.create-user-form select:focus,
+.edit-user-form input:focus,
+.edit-user-form select:focus {
   outline: none;
   border-color: #3498db;
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
-.create-user-form input.error {
+.create-user-form input.error,
+.edit-user-form input.error {
   border-color: #e74c3c;
 }
 

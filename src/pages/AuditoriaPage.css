@@ -1,0 +1,231 @@
+/* AuditoriaPage.css - Estilos para la página de auditoría */
+
+.auditoria-page {
+  padding: 1rem;
+}
+
+.auditoria-page h1 {
+  color: #1a2233;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e0e4ea;
+  padding-bottom: 0.5rem;
+}
+
+/* Sección de información del usuario */
+.user-info-section {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border-left: 4px solid #6cb4ee;
+}
+
+.user-info-section h3 {
+  margin-top: 0;
+  color: #1a2233;
+}
+
+.user-info-section p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+/* Sección de filtros */
+.filtros-section {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border: 1px solid #e0e4ea;
+}
+
+.filtros-section h3 {
+  margin-top: 0;
+  color: #1a2233;
+  margin-bottom: 1rem;
+}
+
+.filtros-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.filtro-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.filtro-item label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.filtro-item input,
+.filtro-item select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Sección de acciones */
+.acciones-section {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border: 1px solid #e0e4ea;
+}
+
+.acciones-section h3 {
+  margin-top: 0;
+  color: #1a2233;
+  margin-bottom: 1rem;
+}
+
+.acciones-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.btn-exportar,
+.btn-backup {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-exportar {
+  background: #28a745;
+  color: white;
+}
+
+.btn-exportar:hover {
+  background: #218838;
+}
+
+.btn-backup {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-backup:hover {
+  background: #138496;
+}
+
+/* Sección de logs */
+.logs-section {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e0e4ea;
+}
+
+.logs-section h3 {
+  margin-top: 0;
+  color: #1a2233;
+  margin-bottom: 1rem;
+}
+
+.logs-container {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.log-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #6cb4ee;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.log-timestamp {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.log-event {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.log-login_success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.log-login_failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.log-logout {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.log-register {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.log-user_updated {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.log-user_deleted {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.log-details p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.log-details strong {
+  color: #333;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .filtros-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .acciones-container {
+    flex-direction: column;
+  }
+  
+  .btn-exportar,
+  .btn-backup {
+    width: 100%;
+  }
+  
+  .log-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+} 

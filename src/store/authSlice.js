@@ -79,11 +79,12 @@ const authSlice = createSlice({
         }
 
         // Agregar nuevo usuario
+        const userId = nanoid();
         const newUser = {
-          id: nanoid(),
+          id: userId,
           fullName,
           username,
-          password: hashPassword(password, nanoid()), // Contraseña hasheada con salt único
+          password: hashPassword(password, userId), // Contraseña hasheada con userId como salt
           role: role || "user",
           email: "",
           isActive: true,
@@ -237,7 +238,7 @@ const authSlice = createSlice({
         }
 
         // Actualizar contraseña
-        user.password = hashPassword(newPassword, user.id); // Contraseña hasheada con salt único
+        user.password = hashPassword(newPassword, user.id); // Contraseña hasheada con userId como salt
         user.updatedAt = new Date().toISOString();
 
         state.error = null;
@@ -254,6 +255,50 @@ const authSlice = createSlice({
       prepare({ username, newPassword }) {
         return {
           payload: { username, newPassword },
+        };
+      },
+    },
+
+    // Cambiar contraseña del usuario actual
+    changePassword: {
+      reducer(state, action) {
+        const { currentPassword, newPassword, userId } = action.payload;
+
+        // Buscar usuario actual
+        const user = state.users.find((u) => u.id === userId);
+
+        if (!user) {
+          state.error = "Usuario no encontrado";
+          return;
+        }
+
+        // Verificar contraseña actual
+        if (!verifyPassword(currentPassword, user.password, user.id)) {
+          state.error = "La contraseña actual es incorrecta";
+          logAuditEvent(AUDIT_EVENTS.PASSWORD_CHANGE, {
+            username: user.username,
+            success: false,
+            reason: "INVALID_CURRENT_PASSWORD",
+          });
+          return;
+        }
+
+        // Actualizar contraseña
+        user.password = hashPassword(newPassword, user.id);
+        user.updatedAt = new Date().toISOString();
+
+        state.error = null;
+        state.success = "Contraseña cambiada correctamente";
+
+        // Log de auditoría
+        logAuditEvent(AUDIT_EVENTS.PASSWORD_CHANGE, {
+          username: user.username,
+          success: true,
+        });
+      },
+      prepare({ currentPassword, newPassword, userId }) {
+        return {
+          payload: { currentPassword, newPassword, userId },
         };
       },
     },
@@ -416,6 +461,7 @@ export const {
   login,
   logout,
   recoveryPassword,
+  changePassword,
   editUser,
   deleteUser,
   toggleUserStatus,

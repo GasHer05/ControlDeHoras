@@ -6,7 +6,7 @@ export const ADMIN_CONFIG = {
   DEFAULT_ADMIN: {
     username: "admin",
     fullName: "Administrador del Sistema",
-    password: "Admin2024!", // Debe cambiarse en producción
+    password: "GasHer1985@", // Debe cambiarse en producción
     role: "admin",
     email: "admin@elorza-arredondo.uy",
     isActive: true,
@@ -52,6 +52,20 @@ export const ADMIN_CONFIG = {
 // Función para verificar si un usuario es admin
 export const isAdmin = (user) => {
   return user && user.role === ADMIN_CONFIG.ROLES.ADMIN;
+};
+
+// Función para verificar si un usuario es manager
+export const isManager = (user) => {
+  return user && user.role === ADMIN_CONFIG.ROLES.MANAGER;
+};
+
+// Función para verificar si un usuario es admin o manager
+export const isAdminOrManager = (user) => {
+  return (
+    user &&
+    (user.role === ADMIN_CONFIG.ROLES.ADMIN ||
+      user.role === ADMIN_CONFIG.ROLES.MANAGER)
+  );
 };
 
 // Función para verificar si un usuario tiene un permiso específico
