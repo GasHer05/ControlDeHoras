@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -16,6 +16,8 @@ import AdminPage from "./pages/AdminPage.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import ChangePasswordForm from "./components/auth/ChangePasswordForm.jsx";
+import FirebaseTest from "./components/FirebaseTest.jsx";
+import MigrationTool from "./components/MigrationTool.jsx";
 import "./styles/main.css";
 import {
   isAdmin,
@@ -27,63 +29,164 @@ import {
 // Importar debug temporal
 // import "./utils/debugAuth.js";
 
+function getUserDisplayName(user) {
+  return user?.username || user?.fullName || user?.usuario || "-";
+}
+
 function App() {
   const { isAuthenticated, currentUser } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const hamburgerRef = useRef(null);
 
   const handleLogout = () => {
     dispatch(logout());
+    setIsMenuOpen(false);
   };
 
   const handleChangePassword = () => {
     setShowChangePassword(true);
+    setIsMenuOpen(false);
   };
 
   const handleCloseChangePassword = () => {
     setShowChangePassword(false);
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isMenuOpen &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        hamburgerRef.current &&
+        !hamburgerRef.current.contains(event.target)
+      ) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMenuOpen]);
+
   return (
     <Router>
       <div className="app-container">
         {isAuthenticated && (
           <nav className="navbar">
-            <ul>
-              <li>
-                <Link to="/clientes">Clientes</Link>
-              </li>
-              <li>
-                <Link to="/registros-horas">Registros de Horas</Link>
-              </li>
-              <li>
-                <Link to="/reportes">Reportes</Link>
-              </li>
-              {isAdminOrManager(currentUser) && (
-                <li>
-                  <Link to="/auditoria">Auditoría</Link>
-                </li>
-              )}
-              {isAdmin(currentUser) && (
-                <li>
-                  <Link to="/admin">Administración</Link>
-                </li>
-              )}
-              <li className="user-info">
-                <span>
-                  Usuario: {currentUser?.fullName || currentUser?.username}
-                </span>
-                <button
-                  onClick={handleChangePassword}
-                  className="change-password-btn"
-                >
-                  🔐 Cambiar Contraseña
-                </button>
-                <button onClick={handleLogout} className="logout-btn">
-                  Cerrar Sesión
-                </button>
-              </li>
-            </ul>
+            <div className="navbar-inner">
+              {/* Logo */}
+              <div className="navbar-logo">
+                <h1 className="logo-text">Elorza-Arredondo Abogados</h1>
+                <div className="logo-underline"></div>
+              </div>
+
+              {/* Menú hamburguesa */}
+              <button
+                ref={hamburgerRef}
+                className={`hamburger-menu ${isMenuOpen ? "active" : ""}`}
+                onClick={toggleMenu}
+                aria-label="Abrir menú"
+              >
+                <span></span>
+                <span></span>
+                <span></span>
+              </button>
+
+              {/* Menú desplegable */}
+              <div
+                ref={menuRef}
+                className={`navbar-dropdown ${isMenuOpen ? "open" : ""}`}
+              >
+                <div className="dropdown-content">
+                  <div className="menu-section">
+                    <h3>Navegación</h3>
+                    <ul className="dropdown-menu">
+                      <li>
+                        <Link to="/clientes" onClick={closeMenu}>
+                          👥 Clientes
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/registros-horas" onClick={closeMenu}>
+                          ⏰ Registros de Horas
+                        </Link>
+                      </li>
+                      <li>
+                        <Link to="/reportes" onClick={closeMenu}>
+                          📊 Reportes
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {isAdmin(currentUser) && (
+                    <div className="menu-section">
+                      <h3>Administración</h3>
+                      <ul className="dropdown-menu">
+                        <li>
+                          <Link to="/firebase-test" onClick={closeMenu}>
+                            🧪 Test Firebase
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/migration" onClick={closeMenu}>
+                            🔄 Migración
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/auditoria" onClick={closeMenu}>
+                            📋 Auditoría
+                          </Link>
+                        </li>
+                        <li>
+                          <Link to="/admin" onClick={closeMenu}>
+                            ⚙️ Administración
+                          </Link>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="menu-section">
+                    <h3>Usuario</h3>
+                    <div className="user-info">
+                      <span className="user-name">
+                        {getUserDisplayName(currentUser)}
+                      </span>
+                    </div>
+                    <div className="user-actions">
+                      <button
+                        onClick={handleChangePassword}
+                        className="btn-menu-action"
+                      >
+                        🔐 Cambiar Contraseña
+                      </button>
+                      <button
+                        onClick={handleLogout}
+                        className="btn-menu-logout"
+                      >
+                        🚪 Cerrar Sesión
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </nav>
         )}
         <main>
@@ -126,6 +229,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/firebase-test"
+              element={
+                <ProtectedRoute>
+                  <FirebaseTest />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/migration"
+              element={
+                <ProtectedRoute>
+                  <MigrationTool />
                 </ProtectedRoute>
               }
             />

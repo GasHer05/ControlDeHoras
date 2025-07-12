@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { recoveryPassword, clearMessages } from "../../store/authSlice";
+import { recoveryPasswordUser, clearMessages } from "../../store/authSlice";
 import "./RecoveryForm.css";
 
 // Componente de recuperación de contraseña
@@ -100,7 +100,7 @@ function RecoveryForm({ onSwitchToLogin }) {
   const handleStep3 = (e) => {
     e.preventDefault();
     if (validateFields()) {
-      dispatch(recoveryPassword({ username, newPassword }));
+      dispatch(recoveryPasswordUser({ username, newPassword, securityAnswer }));
     }
   };
 

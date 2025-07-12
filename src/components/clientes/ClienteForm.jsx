@@ -23,15 +23,18 @@ function ClienteForm({ onSubmit, initialData = null, onCancel }) {
       setTelefono(initialData.telefono || "");
       setDireccion(initialData.direccion || "");
       setIdentificadorFiscal(initialData.identificadorFiscal || "");
-      setValorHora(initialData.valorHora || "");
+      setValorHora(initialData.valorHora ? String(initialData.valorHora) : "");
       setTipoDescuento(initialData.tipoDescuento || "");
-      setValorDescuento(initialData.valorDescuento || "");
+      setValorDescuento(
+        initialData.valorDescuento ? String(initialData.valorDescuento) : ""
+      );
     }
   }, [initialData]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!nombre || !valorHora) return; // Validación básica
+    console.log("[DEBUG ClienteForm] handleSubmit ejecutado");
     onSubmit({
       nombre,
       email,

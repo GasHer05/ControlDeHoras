@@ -1,0 +1,193 @@
+/* Estilos para la página de clientes con sistema de pestañas */
+
+.clientes-page {
+  width: 100%;
+}
+
+/* Contenedor de pestañas */
+.tabs-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+/* Header de pestañas */
+.tabs-header {
+  display: flex;
+  background: linear-gradient(135deg, #F9F6F2 0%, #F5F1EB 100%);
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+  padding: 0;
+}
+
+/* Botones de pestañas */
+.tab-button {
+  flex: 1;
+  padding: 16px 24px;
+  background: transparent;
+  border: none;
+  color: #3E2723;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+  position: relative;
+}
+
+.tab-button:hover {
+  background: rgba(212, 175, 55, 0.1);
+  color: #8B4513;
+}
+
+.tab-button.active {
+  background: #fff;
+  color: #3E2723;
+  border-bottom-color: #D4AF37;
+  font-weight: 600;
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #fff;
+}
+
+/* Contenido de pestañas */
+.tab-content {
+  padding: 0;
+}
+
+/* Pestaña de Lista */
+.lista-tab {
+  padding: 24px;
+}
+
+.lista-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+}
+
+.lista-header h2 {
+  margin: 0;
+  color: #3E2723;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.btn-nuevo-cliente {
+  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+  color: #fff;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.btn-nuevo-cliente:hover {
+  background: linear-gradient(135deg, #B8860B 0%, #8B6914 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+}
+
+/* Pestaña de Formulario */
+.formulario-tab {
+  padding: 24px;
+}
+
+.formulario-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(139, 69, 19, 0.1);
+}
+
+.formulario-header h2 {
+  margin: 0;
+  color: #3E2723;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.btn-volver-lista {
+  background: rgba(139, 69, 19, 0.1);
+  color: #8B4513;
+  border: 1px solid rgba(139, 69, 19, 0.2);
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-volver-lista:hover {
+  background: rgba(139, 69, 19, 0.15);
+  border-color: rgba(139, 69, 19, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .tabs-header {
+    flex-direction: column;
+  }
+  
+  .tab-button {
+    padding: 14px 20px;
+    font-size: 0.95rem;
+  }
+  
+  .lista-header,
+  .formulario-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .btn-nuevo-cliente {
+    width: 100%;
+    padding: 14px 20px;
+  }
+  
+  .btn-volver-lista {
+    width: 100%;
+    text-align: center;
+  }
+  
+  .lista-tab,
+  .formulario-tab {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-button {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .lista-tab,
+  .formulario-tab {
+    padding: 16px 12px;
+  }
+  
+  .lista-header h2,
+  .formulario-header h2 {
+    font-size: 1.3rem;
+  }
+} 

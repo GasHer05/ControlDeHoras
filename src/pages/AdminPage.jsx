@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { isAdmin, hasPermission } from "../config/admin";
 import {
-  register,
-  editUser,
-  deleteUser,
-  toggleUserStatus,
+  registerUser,
+  updateUserData,
+  deleteUserData,
+  toggleUserStatusData,
+  fetchUsers,
 } from "../store/authSlice";
 import { exportAuditLogs, getAuditLogs } from "../utils/auditLogger";
 import { exportBackup } from "../utils/backupManager";
@@ -287,24 +288,28 @@ function UserList({ users, currentUser, onEdit, onDelete, onToggleStatus }) {
         </thead>
         <tbody>
           {users.map((user) => (
-            <tr key={user.id} className={!user.isActive ? "inactive" : ""}>
-              <td>{user.username}</td>
-              <td>{user.fullName}</td>
+            <tr key={user.id} className={!user.activo ? "inactive" : ""}>
+              <td>{user.usuario}</td>
+              <td>{user.nombre}</td>
               <td>
-                <span className={`role-badge role-${user.role}`}>
-                  {user.role}
+                <span className={`role-badge role-${user.rol}`}>
+                  {user.rol}
                 </span>
               </td>
               <td>
                 <span
                   className={`status-badge ${
-                    user.isActive ? "active" : "inactive"
+                    user.activo ? "active" : "inactive"
                   }`}
                 >
-                  {user.isActive ? "Activo" : "Inactivo"}
+                  {user.activo ? "Activo" : "Inactivo"}
                 </span>
               </td>
-              <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+              <td>
+                {user.fechaCreacion
+                  ? new Date(user.fechaCreacion).toLocaleDateString()
+                  : "-"}
+              </td>
               <td>
                 <div className="user-actions">
                   {canEdit && (
@@ -334,7 +339,7 @@ function UserList({ users, currentUser, onEdit, onDelete, onToggleStatus }) {
                       className="btn-toggle"
                       disabled={user.id === "admin-default"}
                     >
-                      {user.isActive ? "Desactivar" : "Activar"}
+                      {user.activo ? "Desactivar" : "Activar"}
                     </button>
                   )}
                 </div>
@@ -356,6 +361,11 @@ function AdminPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
+  // Cargar usuarios al montar
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
   // Verificar permisos de administrador
   if (!isAdmin(currentUser)) {
     return (
@@ -371,8 +381,11 @@ function AdminPage() {
   // Crear nuevo usuario
   const handleCreateUser = (userData) => {
     dispatch(
-      register({
+      registerUser({
         ...userData,
+        usuario: userData.username,
+        nombre: userData.fullName,
+        rol: userData.role,
         createdBy: currentUser.id,
       })
     );
@@ -392,9 +405,14 @@ function AdminPage() {
   // Guardar cambios de edición
   const handleSaveEdit = (updatedData) => {
     dispatch(
-      editUser({
-        userId: editingUser.id,
-        updates: updatedData,
+      updateUserData({
+        id: editingUser.id,
+        updates: {
+          usuario: updatedData.username,
+          nombre: updatedData.fullName,
+          rol: updatedData.role,
+          // Si hay otros campos, agrégalos aquí
+        },
         editedBy: currentUser.id,
       })
     );
@@ -409,15 +427,12 @@ function AdminPage() {
   const handleDeleteUser = (user) => {
     if (
       window.confirm(
-        `¿Estás seguro de que deseas eliminar al usuario ${user.username}?`
+        `¿Estás seguro de que deseas eliminar al usuario ${
+          user.usuario || user.username
+        }?`
       )
     ) {
-      dispatch(
-        deleteUser({
-          userId: user.id,
-          deletedBy: currentUser.id,
-        })
-      );
+      dispatch(deleteUserData(user.id));
 
       if (!error) {
         toast.success("Usuario eliminado exitosamente");
@@ -427,16 +442,11 @@ function AdminPage() {
 
   // Cambiar estado de usuario
   const handleToggleStatus = (user) => {
-    dispatch(
-      toggleUserStatus({
-        userId: user.id,
-        toggledBy: currentUser.id,
-      })
-    );
+    dispatch(toggleUserStatusData({ id: user.id, currentStatus: user.activo }));
 
     if (!error) {
       toast.success(
-        `Usuario ${user.isActive ? "desactivado" : "activado"} exitosamente`
+        `Usuario ${user.activo ? "desactivado" : "activado"} exitosamente`
       );
     }
   };
@@ -477,15 +487,13 @@ function AdminPage() {
         <div className="stat-card">
           <h3>Usuarios</h3>
           <p>{users.length} total</p>
-          <p>{users.filter((u) => u.isActive).length} activos</p>
+          <p>{users.filter((u) => u.activo).length} activos</p>
         </div>
         <div className="stat-card">
           <h3>Roles</h3>
-          <p>
-            {users.filter((u) => u.role === "admin").length} administradores
-          </p>
-          <p>{users.filter((u) => u.role === "manager").length} managers</p>
-          <p>{users.filter((u) => u.role === "user").length} usuarios</p>
+          <p>{users.filter((u) => u.rol === "admin").length} administradores</p>
+          <p>{users.filter((u) => u.rol === "manager").length} managers</p>
+          <p>{users.filter((u) => u.rol === "user").length} usuarios</p>
         </div>
       </div>
 
@@ -513,7 +521,12 @@ function AdminPage() {
 
       {editingUser && (
         <EditUserForm
-          user={editingUser}
+          user={{
+            ...editingUser,
+            fullName: editingUser.nombre || editingUser.fullName || "",
+            username: editingUser.usuario || editingUser.username || "",
+            role: editingUser.rol || editingUser.role || "user",
+          }}
           onSubmit={handleSaveEdit}
           onCancel={() => setEditingUser(null)}
         />

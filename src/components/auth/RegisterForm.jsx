@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { register, clearMessages } from "../../store/authSlice";
+import { registerUser, clearMessages } from "../../store/authSlice";
 import {
   generateUsername,
   isUsernameAvailable,
@@ -114,7 +114,7 @@ function RegisterForm({ onSwitchToLogin }) {
       return;
     }
 
-    dispatch(register({ fullName, username, password, securityAnswer }));
+    dispatch(registerUser({ fullName, username, password, securityAnswer }));
   };
 
   return (

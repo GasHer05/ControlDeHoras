@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { changePassword } from "../../store/authSlice";
+import { changePasswordUser } from "../../store/authSlice";
 import "./ChangePasswordForm.css";
 
 // Componente para cambiar contraseña
@@ -88,10 +88,10 @@ function ChangePasswordForm({ onClose }) {
     }
 
     dispatch(
-      changePassword({
+      changePasswordUser({
+        userId: currentUser.username,
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword,
-        userId: currentUser.id,
       })
     );
 

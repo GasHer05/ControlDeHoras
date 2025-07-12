@@ -1,4 +1,13 @@
-import { createSlice, nanoid } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import {
+  verifyUserCredentials,
+  createUser,
+  getAllUsers,
+  updateUser,
+  deleteUser,
+  getUserByUsername,
+  normalizeUser,
+} from "../services/userService";
 import {
   hashPassword,
   verifyPassword,
@@ -17,454 +26,319 @@ import { ADMIN_CONFIG } from "../config/admin";
 const initialState = {
   isAuthenticated: false,
   currentUser: null,
-  users: [
-    // Usuario administrador por defecto
-    {
-      id: "admin-default",
-      username: ADMIN_CONFIG.DEFAULT_ADMIN.username,
-      fullName: ADMIN_CONFIG.DEFAULT_ADMIN.fullName,
-      password: hashPassword(
-        ADMIN_CONFIG.DEFAULT_ADMIN.password,
-        "admin-default"
-      ),
-      role: ADMIN_CONFIG.DEFAULT_ADMIN.role,
-      email: ADMIN_CONFIG.DEFAULT_ADMIN.email,
-      isActive: ADMIN_CONFIG.DEFAULT_ADMIN.isActive,
-      securityQuestion: "¿Cuál es el nombre de tu primera mascota?",
-      securityAnswer: encryptData("admin"),
-      createdAt: ADMIN_CONFIG.DEFAULT_ADMIN.createdAt,
-    },
-  ],
+  loading: false,
   error: null,
-  success: null,
+  users: [],
 };
+
+// Thunks asíncronos
+export const fetchUsers = createAsyncThunk(
+  "auth/fetchUsers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const users = await getAllUsers();
+
+      // Función de depuración para verificar Timestamps
+      const checkForTimestamps = (obj, path = "") => {
+        for (const [key, value] of Object.entries(obj)) {
+          const currentPath = path ? `${path}.${key}` : key;
+          if (
+            value &&
+            typeof value === "object" &&
+            value.constructor &&
+            value.constructor.name === "Timestamp"
+          ) {
+            console.warn(`⚠️ Timestamp detectado en: ${currentPath}`, value);
+          } else if (
+            value &&
+            typeof value === "object" &&
+            !Array.isArray(value)
+          ) {
+            checkForTimestamps(value, currentPath);
+          }
+        }
+      };
+
+      // Verificar cada usuario
+      users.forEach((user, index) => {
+        checkForTimestamps(user, `users[${index}]`);
+      });
+
+      console.log("[DEBUG] Usuarios ya normalizados desde getAllUsers:", users);
+      return users;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const loginUser = createAsyncThunk(
+  "auth/loginUser",
+  async ({ username, password }, { rejectWithValue }) => {
+    try {
+      const user = await verifyUserCredentials(username, password);
+      if (!user) {
+        logAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, { usuario: username });
+        throw new Error("Usuario o contraseña incorrectos");
+      }
+      logAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, { usuario: username });
+      return user;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  "auth/registerUser",
+  async (userData, { rejectWithValue, getState }) => {
+    try {
+      const existing = await getUserByUsername(userData.usuario);
+      if (existing) throw new Error("El nombre de usuario ya existe");
+      const nuevoUsuario = await createUser(userData);
+      const currentUser = getState().auth.currentUser;
+      logAuditEvent(AUDIT_EVENTS.USER_CREATED, {
+        usuario: currentUser?.usuario,
+        usuarioAfectado: userData.usuario,
+        nombre: userData.nombre,
+      });
+      return nuevoUsuario;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const updateUserData = createAsyncThunk(
+  "auth/updateUserData",
+  async ({ id, updates }, { rejectWithValue, getState }) => {
+    try {
+      const updated = await updateUser(id, updates);
+      const currentUser = getState().auth.currentUser;
+      logAuditEvent(AUDIT_EVENTS.USER_UPDATED, {
+        usuario: currentUser?.usuario,
+        usuarioAfectado: updates.usuario,
+        id,
+        updates,
+      });
+      return updated;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteUserData = createAsyncThunk(
+  "auth/deleteUserData",
+  async (id, { rejectWithValue, getState }) => {
+    try {
+      await deleteUser(id);
+      const currentUser = getState().auth.currentUser;
+      logAuditEvent(AUDIT_EVENTS.USER_DELETED, {
+        usuario: currentUser?.usuario,
+        usuarioAfectado: id,
+      });
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const toggleUserStatusData = createAsyncThunk(
+  "auth/toggleUserStatusData",
+  async ({ id, currentStatus }, { rejectWithValue }) => {
+    try {
+      // Cambiar el estado activo/inactivo
+      const updates = { activo: !currentStatus };
+      return await updateUser(id, updates);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const recoveryPasswordUser = createAsyncThunk(
+  "auth/recoveryPasswordUser",
+  async ({ username, newPassword, securityAnswer }, { rejectWithValue }) => {
+    try {
+      const user = await getUserByUsername(username);
+      if (!user) throw new Error("Usuario no encontrado");
+      // (Opcional) Validar respuesta de seguridad aquí si es necesario
+      // Actualizar contraseña
+      const updates = { password: newPassword };
+      return await updateUser(user.id, updates);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const changePasswordUser = createAsyncThunk(
+  "auth/changePasswordUser",
+  async ({ userId, currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      // Obtener usuario actual
+      const user = await getUserByUsername(userId);
+      if (!user) throw new Error("Usuario no encontrado");
+      // Verificar contraseña actual
+      // (Opcional: podrías usar verifyUserCredentials si tienes el username)
+      // Aquí asumimos que userId es el username
+      const isValid = await verifyUserCredentials(
+        user.usuario,
+        currentPassword
+      );
+      if (!isValid) throw new Error("La contraseña actual es incorrecta");
+      // Actualizar contraseña
+      const updates = { password: newPassword };
+      return await updateUser(user.id, updates);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    // Registrar nuevo usuario (solo admin puede crear usuarios)
-    register: {
-      reducer(state, action) {
-        const {
-          fullName,
-          username,
-          password,
-          securityAnswer,
-          role = "user",
-          createdBy,
-        } = action.payload;
-
-        // Verificar que solo un admin puede crear usuarios
-        if (
-          !createdBy ||
-          !state.users.find((u) => u.id === createdBy && u.role === "admin")
-        ) {
-          state.error = "Solo los administradores pueden crear usuarios";
-          return;
-        }
-
-        // Asegurar que users existe
-        if (!state.users) {
-          state.users = [];
-        }
-
-        // Verificar si el usuario ya existe
-        const userExists = state.users.find(
-          (user) => user.username === username
-        );
-        if (userExists) {
-          state.error = "El nombre de usuario ya existe";
-          return;
-        }
-
-        // Agregar nuevo usuario
-        const userId = nanoid();
-        const newUser = {
-          id: userId,
-          fullName,
-          username,
-          password: hashPassword(password, userId), // Contraseña hasheada con userId como salt
-          role: role || "user",
-          email: "",
-          isActive: true,
-          securityQuestion: "¿Cuál es el nombre de tu primera mascota?",
-          securityAnswer: encryptData(securityAnswer), // Respuesta encriptada
-          createdAt: new Date().toISOString(),
-          createdBy: createdBy,
-        };
-
-        state.users.push(newUser);
-        state.error = null;
-        state.success = "Usuario creado exitosamente";
-
-        // Log de auditoría
-        logAuditEvent(AUDIT_EVENTS.REGISTER, {
-          username: newUser.username,
-          fullName: newUser.fullName,
-          role: newUser.role,
-          createdBy: createdBy,
-        });
-      },
-      prepare({
-        fullName,
-        username,
-        password,
-        securityAnswer,
-        role,
-        createdBy,
-      }) {
-        return {
-          payload: {
-            fullName,
-            username,
-            password,
-            securityAnswer,
-            role,
-            createdBy,
-          },
-        };
-      },
-    },
-
-    // Iniciar sesión
-    login: {
-      reducer(state, action) {
-        const { username, password } = action.payload;
-
-        // Verificar rate limiting para login
-        const rateLimitCheck = checkRateLimit("LOGIN_ATTEMPTS", username);
-        if (!rateLimitCheck.allowed) {
-          state.error = rateLimitCheck.message;
-          recordAttempt("LOGIN_ATTEMPTS", username, false);
-          return;
-        }
-
-        // Asegurar que users existe
-        if (!state.users) {
-          state.users = [];
-        }
-
-        // Buscar usuario
-        const user = state.users.find((u) => u.username === username);
-
-        if (!user) {
-          state.error = "Usuario o contraseña incorrectos";
-          state.isAuthenticated = false;
-          state.currentUser = null;
-          recordAttempt("LOGIN_ATTEMPTS", username, false);
-          logAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, {
-            username,
-            reason: "USER_NOT_FOUND",
-          });
-          return;
-        }
-
-        // Verificar contraseña
-        if (!verifyPassword(password, user.password, user.id)) {
-          state.error = "Usuario o contraseña incorrectos";
-          state.isAuthenticated = false;
-          state.currentUser = null;
-          recordAttempt("LOGIN_ATTEMPTS", username, false);
-          logAuditEvent(AUDIT_EVENTS.LOGIN_FAILED, {
-            username,
-            reason: "INVALID_PASSWORD",
-          });
-          return;
-        }
-
-        state.currentUser = user;
-        state.isAuthenticated = true;
-        state.error = null;
-        state.success = "Sesión iniciada correctamente";
-
-        // Log de auditoría y limpiar intentos
-        logAuditEvent(AUDIT_EVENTS.LOGIN_SUCCESS, {
-          username: user.username,
-          fullName: user.fullName,
-        });
-        recordAttempt("LOGIN_ATTEMPTS", username, true);
-        clearAttempts("LOGIN_ATTEMPTS", username);
-      },
-      prepare({ username, password }) {
-        return {
-          payload: { username, password },
-        };
-      },
-    },
-
-    // Cerrar sesión
     logout: (state) => {
-      const currentUser = state.currentUser;
       state.isAuthenticated = false;
       state.currentUser = null;
       state.error = null;
-      state.success = "Sesión cerrada correctamente";
-
-      // Log de auditoría
-      if (currentUser) {
-        logAuditEvent(AUDIT_EVENTS.LOGOUT, {
-          username: currentUser.username,
-          fullName: currentUser.fullName,
-        });
-      }
     },
-
-    // Recuperar contraseña
-    recoveryPassword: {
-      reducer(state, action) {
-        const { username, newPassword } = action.payload;
-
-        // Verificar rate limiting para recuperación
-        const rateLimitCheck = checkRateLimit("RECOVERY_ATTEMPTS", username);
-        if (!rateLimitCheck.allowed) {
-          state.error = rateLimitCheck.message;
-          recordAttempt("RECOVERY_ATTEMPTS", username, false);
-          return;
-        }
-
-        // Buscar usuario
-        const user = state.users.find((u) => u.username === username);
-
-        if (!user) {
-          state.error = "Usuario no encontrado";
-          recordAttempt("RECOVERY_ATTEMPTS", username, false);
-          logAuditEvent(AUDIT_EVENTS.PASSWORD_RECOVERY, {
-            username,
-            success: false,
-            reason: "USER_NOT_FOUND",
-          });
-          return;
-        }
-
-        // Actualizar contraseña
-        user.password = hashPassword(newPassword, user.id); // Contraseña hasheada con userId como salt
-        user.updatedAt = new Date().toISOString();
-
-        state.error = null;
-        state.success = "Contraseña actualizada correctamente";
-
-        // Log de auditoría y limpiar intentos
-        logAuditEvent(AUDIT_EVENTS.PASSWORD_RECOVERY, {
-          username: user.username,
-          success: true,
-        });
-        recordAttempt("RECOVERY_ATTEMPTS", username, true);
-        clearAttempts("RECOVERY_ATTEMPTS", username);
-      },
-      prepare({ username, newPassword }) {
-        return {
-          payload: { username, newPassword },
-        };
-      },
-    },
-
-    // Cambiar contraseña del usuario actual
-    changePassword: {
-      reducer(state, action) {
-        const { currentPassword, newPassword, userId } = action.payload;
-
-        // Buscar usuario actual
-        const user = state.users.find((u) => u.id === userId);
-
-        if (!user) {
-          state.error = "Usuario no encontrado";
-          return;
-        }
-
-        // Verificar contraseña actual
-        if (!verifyPassword(currentPassword, user.password, user.id)) {
-          state.error = "La contraseña actual es incorrecta";
-          logAuditEvent(AUDIT_EVENTS.PASSWORD_CHANGE, {
-            username: user.username,
-            success: false,
-            reason: "INVALID_CURRENT_PASSWORD",
-          });
-          return;
-        }
-
-        // Actualizar contraseña
-        user.password = hashPassword(newPassword, user.id);
-        user.updatedAt = new Date().toISOString();
-
-        state.error = null;
-        state.success = "Contraseña cambiada correctamente";
-
-        // Log de auditoría
-        logAuditEvent(AUDIT_EVENTS.PASSWORD_CHANGE, {
-          username: user.username,
-          success: true,
-        });
-      },
-      prepare({ currentPassword, newPassword, userId }) {
-        return {
-          payload: { currentPassword, newPassword, userId },
-        };
-      },
-    },
-
-    // Editar usuario (solo admin)
-    editUser: {
-      reducer(state, action) {
-        const { userId, updates, editedBy } = action.payload;
-
-        // Verificar que solo un admin puede editar usuarios
-        if (
-          !editedBy ||
-          !state.users.find((u) => u.id === editedBy && u.role === "admin")
-        ) {
-          state.error = "Solo los administradores pueden editar usuarios";
-          return;
-        }
-
-        const user = state.users.find((u) => u.id === userId);
-        if (!user) {
-          state.error = "Usuario no encontrado";
-          return;
-        }
-
-        // Proteger al admin por defecto
-        if (user.id === "admin-default" && updates.role !== "admin") {
-          state.error =
-            "No se puede cambiar el rol del administrador por defecto";
-          return;
-        }
-
-        // Actualizar usuario
-        Object.assign(user, updates);
-        user.modifiedBy = editedBy;
-        user.modifiedAt = new Date().toISOString();
-
-        state.error = null;
-        state.success = "Usuario actualizado correctamente";
-
-        // Log de auditoría
-        logAuditEvent(AUDIT_EVENTS.USER_UPDATED, {
-          userId,
-          updates,
-          editedBy,
-        });
-      },
-      prepare({ userId, updates, editedBy }) {
-        return { payload: { userId, updates, editedBy } };
-      },
-    },
-
-    // Eliminar usuario (solo admin)
-    deleteUser: {
-      reducer(state, action) {
-        const { userId, deletedBy } = action.payload;
-
-        // Verificar que solo un admin puede eliminar usuarios
-        if (
-          !deletedBy ||
-          !state.users.find((u) => u.id === deletedBy && u.role === "admin")
-        ) {
-          state.error = "Solo los administradores pueden eliminar usuarios";
-          return;
-        }
-
-        const user = state.users.find((u) => u.id === userId);
-        if (!user) {
-          state.error = "Usuario no encontrado";
-          return;
-        }
-
-        // Proteger al admin por defecto
-        if (user.id === "admin-default") {
-          state.error = "No se puede eliminar al administrador por defecto";
-          return;
-        }
-
-        // No permitir que un usuario se elimine a sí mismo
-        if (userId === deletedBy) {
-          state.error = "No puedes eliminar tu propia cuenta";
-          return;
-        }
-
-        // Eliminar usuario
-        state.users = state.users.filter((u) => u.id !== userId);
-        state.error = null;
-        state.success = "Usuario eliminado correctamente";
-
-        // Log de auditoría
-        logAuditEvent(AUDIT_EVENTS.USER_DELETED, {
-          userId,
-          username: user.username,
-          deletedBy,
-        });
-      },
-      prepare({ userId, deletedBy }) {
-        return { payload: { userId, deletedBy } };
-      },
-    },
-
-    // Activar/Desactivar usuario (solo admin)
-    toggleUserStatus: {
-      reducer(state, action) {
-        const { userId, toggledBy } = action.payload;
-
-        // Verificar que solo un admin puede cambiar estado de usuarios
-        if (
-          !toggledBy ||
-          !state.users.find((u) => u.id === toggledBy && u.role === "admin")
-        ) {
-          state.error =
-            "Solo los administradores pueden cambiar el estado de usuarios";
-          return;
-        }
-
-        const user = state.users.find((u) => u.id === userId);
-        if (!user) {
-          state.error = "Usuario no encontrado";
-          return;
-        }
-
-        // Proteger al admin por defecto
-        if (user.id === "admin-default") {
-          state.error = "No se puede desactivar al administrador por defecto";
-          return;
-        }
-
-        // Cambiar estado
-        user.isActive = !user.isActive;
-        user.modifiedBy = toggledBy;
-        user.modifiedAt = new Date().toISOString();
-
-        state.error = null;
-        state.success = `Usuario ${
-          user.isActive ? "activado" : "desactivado"
-        } correctamente`;
-
-        // Log de auditoría
-        logAuditEvent(AUDIT_EVENTS.USER_STATUS_CHANGED, {
-          userId,
-          newStatus: user.isActive,
-          toggledBy,
-        });
-      },
-      prepare({ userId, toggledBy }) {
-        return { payload: { userId, toggledBy } };
-      },
-    },
-
-    // Limpiar mensajes
     clearMessages: (state) => {
       state.error = null;
-      state.success = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Fetch users
+      .addCase(fetchUsers.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUsers.fulfilled, (state, action) => {
+        return { ...state, loading: false, users: action.payload };
+      })
+      .addCase(fetchUsers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Login
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = true;
+        state.currentUser = action.payload;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.isAuthenticated = false;
+        state.currentUser = null;
+        state.error = action.payload;
+      })
+      // Register
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users.push(normalizeUser(action.payload));
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Update
+      .addCase(updateUserData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUserData.fulfilled, (state, action) => {
+        state.loading = false;
+        const idx = state.users.findIndex((u) => u.id === action.payload.id);
+        if (idx !== -1) {
+          state.users[idx] = normalizeUser(action.payload);
+        }
+        if (state.currentUser && state.currentUser.id === action.payload.id) {
+          state.currentUser = normalizeUser(action.payload);
+        }
+      })
+      .addCase(updateUserData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Delete
+      .addCase(deleteUserData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteUserData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.users = state.users
+          .filter((u) => u.id !== action.payload)
+          .map(normalizeUser);
+        if (state.currentUser && state.currentUser.id === action.payload) {
+          state.isAuthenticated = false;
+          state.currentUser = null;
+        }
+      })
+      .addCase(deleteUserData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Toggle user status
+      .addCase(toggleUserStatusData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(toggleUserStatusData.fulfilled, (state, action) => {
+        state.loading = false;
+        const idx = state.users.findIndex((u) => u.id === action.payload.id);
+        if (idx !== -1) {
+          state.users[idx] = action.payload;
+        }
+        if (state.currentUser && state.currentUser.id === action.payload.id) {
+          state.currentUser = action.payload;
+        }
+      })
+      .addCase(toggleUserStatusData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Recovery password
+      .addCase(recoveryPasswordUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(recoveryPasswordUser.fulfilled, (state, action) => {
+        state.loading = false;
+        // Opcional: podrías mostrar un mensaje de éxito
+      })
+      .addCase(recoveryPasswordUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Change password
+      .addCase(changePasswordUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(changePasswordUser.fulfilled, (state, action) => {
+        state.loading = false;
+        // Opcional: podrías mostrar un mensaje de éxito
+      })
+      .addCase(changePasswordUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 
-export const {
-  register,
-  login,
-  logout,
-  recoveryPassword,
-  changePassword,
-  editUser,
-  deleteUser,
-  toggleUserStatus,
-  clearMessages,
-} = authSlice.actions;
+export const { logout, clearMessages } = authSlice.actions;
 export default authSlice.reducer;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { isAdmin, isManager, hasPermission } from "../config/admin";
+import { AUDIT_EVENTS } from "../utils/auditLogger";
 import "./AuditoriaPage.css";
 
 // Página de auditoría para managers y admins
@@ -12,7 +13,9 @@ function AuditoriaPage() {
     fechaFin: "",
     tipo: "todos",
     usuario: "",
+    texto: "",
   });
+  const [detalleExpandido, setDetalleExpandido] = useState(null);
 
   // Verificar permisos
   const canViewLogs = hasPermission(currentUser, "VIEW_AUDIT_LOGS");
@@ -21,21 +24,29 @@ function AuditoriaPage() {
   const isUserManager = isManager(currentUser);
 
   useEffect(() => {
-    // Simular carga de logs desde localStorage
-    const auditLogs = JSON.parse(localStorage.getItem("audit_logs") || "[]");
-    setLogs(auditLogs);
+    // Cargar logs desde localStorage
+    const auditLogs = JSON.parse(localStorage.getItem("auditLogs") || "[]");
+    setLogs(auditLogs.reverse()); // Mostrar los más recientes primero
   }, []);
 
   // Filtrar logs
   const logsFiltrados = logs.filter((log) => {
-    const { fechaInicio, fechaFin, tipo, usuario } = filtro;
-
+    const { fechaInicio, fechaFin, tipo, usuario, texto } = filtro;
     if (fechaInicio && log.timestamp < fechaInicio) return false;
     if (fechaFin && log.timestamp > fechaFin) return false;
     if (tipo !== "todos" && log.event !== tipo) return false;
-    if (usuario && !log.username?.toLowerCase().includes(usuario.toLowerCase()))
+    if (
+      usuario &&
+      !(log.details?.usuario || log.username || "")
+        .toLowerCase()
+        .includes(usuario.toLowerCase())
+    )
       return false;
-
+    if (
+      texto &&
+      !JSON.stringify(log).toLowerCase().includes(texto.toLowerCase())
+    )
+      return false;
     return true;
   });
 
@@ -85,83 +96,147 @@ function AuditoriaPage() {
   return (
     <div className="auditoria-page">
       <h1>Auditoría del Sistema</h1>
-
-      {/* Información del usuario */}
-      <div className="user-info-section">
-        <h3>Información del Usuario</h3>
-        <p>
-          <strong>Usuario:</strong>{" "}
-          {currentUser?.fullName || currentUser?.username}
-        </p>
-        <p>
-          <strong>Rol:</strong> {currentUser?.role}
-        </p>
-        <p>
-          <strong>Permisos:</strong>{" "}
-          {isUserAdmin
-            ? "Administrador"
-            : isUserManager
-            ? "Manager"
-            : "Usuario"}
-        </p>
-      </div>
-
+      <p className="auditoria-explicacion">
+        Aquí puedes ver el historial de acciones importantes realizadas en el
+        sistema (creación, edición, eliminación, login, etc.). Usa los filtros
+        para buscar por usuario, tipo de acción, fecha o texto.
+      </p>
       {/* Filtros */}
       <div className="filtros-section">
-        <h3>Filtros</h3>
-        <div className="filtros-container">
-          <div className="filtro-item">
-            <label>Fecha Inicio:</label>
-            <input
-              type="date"
-              value={filtro.fechaInicio}
-              onChange={(e) =>
-                setFiltro({ ...filtro, fechaInicio: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="filtro-item">
-            <label>Fecha Fin:</label>
-            <input
-              type="date"
-              value={filtro.fechaFin}
-              onChange={(e) =>
-                setFiltro({ ...filtro, fechaFin: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="filtro-item">
-            <label>Tipo de Evento:</label>
-            <select
-              value={filtro.tipo}
-              onChange={(e) => setFiltro({ ...filtro, tipo: e.target.value })}
-            >
-              <option value="todos">Todos los eventos</option>
-              <option value="LOGIN_SUCCESS">Login exitoso</option>
-              <option value="LOGIN_FAILED">Login fallido</option>
-              <option value="LOGOUT">Logout</option>
-              <option value="REGISTER">Registro de usuario</option>
-              <option value="USER_UPDATED">Usuario actualizado</option>
-              <option value="USER_DELETED">Usuario eliminado</option>
-            </select>
-          </div>
-
-          <div className="filtro-item">
-            <label>Usuario:</label>
-            <input
-              type="text"
-              placeholder="Buscar por usuario..."
-              value={filtro.usuario}
-              onChange={(e) =>
-                setFiltro({ ...filtro, usuario: e.target.value })
-              }
-            />
-          </div>
-        </div>
+        <input
+          type="date"
+          value={filtro.fechaInicio}
+          onChange={(e) =>
+            setFiltro({ ...filtro, fechaInicio: e.target.value })
+          }
+          placeholder="Fecha inicio"
+        />
+        <input
+          type="date"
+          value={filtro.fechaFin}
+          onChange={(e) => setFiltro({ ...filtro, fechaFin: e.target.value })}
+          placeholder="Fecha fin"
+        />
+        <select
+          value={filtro.tipo}
+          onChange={(e) => setFiltro({ ...filtro, tipo: e.target.value })}
+        >
+          <option value="todos">Todos los eventos</option>
+          {Object.values(AUDIT_EVENTS).map((ev) => (
+            <option key={ev} value={ev}>
+              {ev}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          value={filtro.usuario}
+          onChange={(e) => setFiltro({ ...filtro, usuario: e.target.value })}
+          placeholder="Usuario"
+        />
+        <input
+          type="text"
+          value={filtro.texto}
+          onChange={(e) => setFiltro({ ...filtro, texto: e.target.value })}
+          placeholder="Buscar en detalles..."
+        />
       </div>
-
+      {/* Tabla de logs */}
+      <div style={{ overflowX: "auto" }}>
+        <table className="auditoria-table">
+          <thead>
+            <tr>
+              <th>Fecha/Hora</th>
+              <th>Usuario</th>
+              <th>Acción</th>
+              <th>Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logsFiltrados.length === 0 ? (
+              <tr>
+                <td colSpan={4}>
+                  No hay logs que coincidan con los filtros seleccionados.
+                </td>
+              </tr>
+            ) : (
+              logsFiltrados.map((log, idx) => {
+                const usuario =
+                  log.details?.usuario ||
+                  log.details?.username ||
+                  log.username ||
+                  log.details?.fullName ||
+                  "-";
+                const resumen =
+                  log.details && Object.keys(log.details).length > 0
+                    ? Object.entries(log.details)
+                        .map(
+                          ([k, v]) =>
+                            `${k}: ${
+                              typeof v === "object"
+                                ? JSON.stringify(v)
+                                : String(v)
+                            }`
+                        )
+                        .join(", ")
+                        .slice(0, 60) +
+                      (Object.keys(log.details).length > 1 ? "..." : "")
+                    : "-";
+                const tieneDetalles =
+                  log.details && Object.keys(log.details).length > 0;
+                return (
+                  <tr
+                    key={idx}
+                    className={idx % 2 === 0 ? "fila-par" : "fila-impar"}
+                  >
+                    <td>{new Date(log.timestamp).toLocaleString()}</td>
+                    <td>{usuario}</td>
+                    <td>{log.event}</td>
+                    <td
+                      style={{
+                        maxWidth: 400,
+                        whiteSpace: "pre-wrap",
+                        fontSize: 13,
+                        verticalAlign: "top",
+                      }}
+                    >
+                      <div className="detalle-flex">
+                        <span className="detalle-resumen">{resumen}</span>
+                        <button
+                          className="btn-detalle"
+                          style={{ visibility: "visible" }}
+                          onClick={() =>
+                            tieneDetalles
+                              ? setDetalleExpandido(
+                                  detalleExpandido === idx ? null : idx
+                                )
+                              : null
+                          }
+                          disabled={!tieneDetalles}
+                        >
+                          {detalleExpandido === idx ? "Ocultar" : "Ver más"}
+                        </button>
+                      </div>
+                      {detalleExpandido === idx && tieneDetalles && (
+                        <div className="detalle-expandido">
+                          {Object.entries(log.details).map(([k, v]) => (
+                            <div key={k}>
+                              <strong>{k}:</strong>{" "}
+                              {typeof v === "object"
+                                ? JSON.stringify(v)
+                                : String(v)}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
       {/* Acciones */}
       <div className="acciones-section">
         <h3>Acciones</h3>
@@ -178,39 +253,6 @@ function AuditoriaPage() {
             </button>
           )}
         </div>
-      </div>
-
-      {/* Lista de logs */}
-      <div className="logs-section">
-        <h3>Logs de Auditoría ({logsFiltrados.length} registros)</h3>
-
-        {logsFiltrados.length === 0 ? (
-          <p>No hay logs que coincidan con los filtros seleccionados.</p>
-        ) : (
-          <div className="logs-container">
-            {logsFiltrados.map((log, index) => (
-              <div key={index} className="log-item">
-                <div className="log-header">
-                  <span className="log-timestamp">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </span>
-                  <span className={`log-event log-${log.event.toLowerCase()}`}>
-                    {log.event}
-                  </span>
-                </div>
-                <div className="log-details">
-                  <p>
-                    <strong>Usuario:</strong> {log.username || "N/A"}
-                  </p>
-                  <p>
-                    <strong>Detalles:</strong>{" "}
-                    {JSON.stringify(log.details || {})}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

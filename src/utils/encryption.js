@@ -15,10 +15,12 @@ export const encryptData = (data) => {
 export const decryptData = (encryptedData) => {
   try {
     const bytes = CryptoJS.AES.decrypt(encryptedData, getEncryptionKey());
-    return bytes.toString(CryptoJS.enc.Utf8);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    // Si el resultado es vacío, probablemente no estaba encriptado
+    return decrypted || encryptedData;
   } catch (error) {
-    console.error("Error al desencriptar:", error);
-    return encryptedData; // Fallback al texto encriptado en caso de error
+    // Si falla, devuelve el valor original (texto plano)
+    return encryptedData;
   }
 };
 

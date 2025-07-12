@@ -32,78 +32,115 @@ function exportarPDF({ cliente, registros, estadisticas }) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Logo removido
+  // Cargar logo desde archivo (más limpio que Base64)
+  const loadLogo = async () => {
+    try {
+      const response = await fetch("/src/assets/elorza-arredondo.jpg");
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.warn("No se pudo cargar el logo:", error);
+      return null;
+    }
+  };
 
-  // Encabezado
-  doc.setFontSize(16);
-  doc.text("Reporte de Horas", pageWidth / 2, 48, { align: "center" });
-  doc.setFontSize(10);
-  doc.text("Elorza - Arredondo Abogados", pageWidth / 2, 55, {
-    align: "center",
-  });
-  doc.text("Constituyente 1467 oficina 503, Montevideo", pageWidth / 2, 60, {
-    align: "center",
-  });
-  doc.text("contacto@elorza-arredondo.uy", pageWidth / 2, 65, {
-    align: "center",
-  });
+  // Función async para exportar con logo
+  const exportarConLogo = async () => {
+    const logoBase64 = await loadLogo();
 
-  // Datos del cliente
-  let y = 75;
-  doc.setFontSize(12);
-  doc.text(`Cliente: ${cliente.nombre}`, 14, y);
-  doc.setFontSize(10);
-  doc.text(`Email: ${cliente.email || "-"}`, 14, y + 6);
-  doc.text(`Teléfono: ${cliente.telefono || "-"}`, 14, y + 12);
-  doc.text(`Dirección: ${cliente.direccion || "-"}`, 14, y + 18);
-  doc.text(
-    `Identificador Fiscal: ${cliente.identificadorFiscal || "-"}`,
-    14,
-    y + 24
-  );
-  doc.text(`Valor por hora: $${cliente.valorHora}`, 14, y + 30);
-  if (cliente.tipoDescuento && cliente.valorDescuento) {
+    if (logoBase64) {
+      // Cargar la imagen en un objeto Image para obtener su tamaño real
+      const img = new window.Image();
+      img.src = logoBase64;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+      const desiredWidth = 40; // mm
+      // jsPDF usa unidades por defecto en mm
+      const aspectRatio = img.width / img.height;
+      const calculatedHeight = desiredWidth / aspectRatio;
+      // Insertar logo alineado a la izquierda arriba, manteniendo proporción
+      doc.addImage(logoBase64, "JPEG", 15, 15, desiredWidth, calculatedHeight);
+    }
+
+    // Encabezado
+    doc.setFontSize(16);
+    doc.text("Reporte de Horas", pageWidth / 2, 48, { align: "center" });
+    doc.setFontSize(10);
+    doc.text("Elorza - Arredondo Abogados", pageWidth / 2, 55, {
+      align: "center",
+    });
+    doc.text("Constituyente 1467 oficina 503, Montevideo", pageWidth / 2, 60, {
+      align: "center",
+    });
+    doc.text("contacto@elorza-arredondo.uy", pageWidth / 2, 65, {
+      align: "center",
+    });
+
+    // Datos del cliente
+    let y = 75;
+    doc.setFontSize(12);
+    doc.text(`Cliente: ${cliente.nombre}`, 14, y);
+    doc.setFontSize(10);
+    doc.text(`Email: ${cliente.email || "-"}`, 14, y + 6);
+    doc.text(`Teléfono: ${cliente.telefono || "-"}`, 14, y + 12);
+    doc.text(`Dirección: ${cliente.direccion || "-"}`, 14, y + 18);
     doc.text(
-      `Descuento: ${
-        cliente.tipoDescuento === "porcentaje"
-          ? cliente.valorDescuento + "%"
-          : "$" + cliente.valorDescuento
-      }`,
+      `Identificador Fiscal: ${cliente.identificadorFiscal || "-"}`,
       14,
-      y + 36
+      y + 24
     );
-  }
+    doc.text(`Valor por hora: $${cliente.valorHora} + IVA`, 14, y + 30);
+    if (cliente.tipoDescuento && cliente.valorDescuento) {
+      doc.text(
+        `Descuento: ${
+          cliente.tipoDescuento === "porcentaje"
+            ? cliente.valorDescuento + "%"
+            : "$" + cliente.valorDescuento
+        }`,
+        14,
+        y + 36
+      );
+    }
 
-  // Estadísticas
-  y += 42;
-  doc.setFontSize(11);
-  doc.text(`Total Horas: ${estadisticas.totalHoras}`, 14, y);
-  doc.text(`Total Facturado: $${estadisticas.totalMonto}`, 70, y);
-  doc.text(`Total Registros: ${estadisticas.totalRegistros}`, 140, y);
+    // Estadísticas
+    y += 42;
+    doc.setFontSize(11);
+    doc.text(`Total Horas: ${estadisticas.totalHoras}`, 14, y);
+    doc.text(`Total Facturado: $${estadisticas.totalMonto} + IVA`, 70, y);
+    doc.text(`Total Registros: ${estadisticas.totalRegistros}`, 140, y);
 
-  // Tabla de registros
-  y += 8;
-  autoTable(doc, {
-    startY: y + 5,
-    head: [["Fecha", "Horas", "Monto", "Descuento", "Descripción"]],
-    body: registros.map((r) => [
-      r.fecha,
-      r.horas,
-      `$${r.monto}`,
-      r.tipoDescuento && r.valorDescuento
-        ? r.tipoDescuento === "porcentaje"
-          ? `${r.valorDescuento}%`
-          : `$${r.valorDescuento}`
-        : "-",
-      r.descripcion || "-",
-    ]),
-    styles: { fontSize: 9 },
-    headStyles: { fillColor: [34, 46, 58] },
-    margin: { left: 10, right: 10 },
-    theme: "grid",
-  });
+    // Tabla de registros
+    y += 8;
+    autoTable(doc, {
+      startY: y + 5,
+      head: [["Fecha", "Horas", "Monto", "Descuento", "Descripción"]],
+      body: registros.map((r) => [
+        r.fecha,
+        r.horas,
+        `$${r.monto} + IVA`,
+        r.tipoDescuento && r.valorDescuento
+          ? r.tipoDescuento === "porcentaje"
+            ? `${r.valorDescuento}%`
+            : `$${r.valorDescuento}`
+          : "-",
+        r.descripcion || "-",
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [34, 46, 58] },
+      margin: { left: 10, right: 10 },
+      theme: "grid",
+    });
 
-  doc.save(`Reporte_${cliente.nombre.replace(/\s+/g, "_")}.pdf`);
+    doc.save(`Reporte_${cliente.nombre.replace(/\s+/g, "_")}.pdf`);
+  };
+
+  // Ejecutar la exportación
+  exportarConLogo();
 }
 
 // Componente que muestra el reporte de un cliente específico
@@ -138,7 +175,7 @@ function ReporteCliente({ cliente, registros }) {
         <div className="cliente-info">
           <h4>{cliente.nombre}</h4>
           <span className="valor-hora">
-            Valor por hora: ${cliente.valorHora}
+            Valor por hora: ${cliente.valorHora} + IVA
           </span>
           {renderDescuento(cliente.tipoDescuento, cliente.valorDescuento)}
         </div>
@@ -150,7 +187,7 @@ function ReporteCliente({ cliente, registros }) {
           </div>
           <div className="stat">
             <span className="stat-label">Total Facturado:</span>
-            <span className="stat-value">${estadisticas.totalMonto}</span>
+            <span className="stat-value">${estadisticas.totalMonto} + IVA</span>
           </div>
           <div className="stat">
             <span className="stat-label">Promedio por registro:</span>
@@ -178,35 +215,35 @@ function ReporteCliente({ cliente, registros }) {
               estadisticas,
             })
           }
-          className="exportar-pdf-btn"
+          className="exportar-pdf"
         >
           Exportar a PDF
         </button>
       </div>
 
       {mostrarDetalles && (
-        <div className="registros-detalle">
-          <div className="auditoria-cliente">
-            <div>
-              <strong>Creado por:</strong> {cliente.creadoPor || "-"}
-              {" | "}
-              <strong>Fecha:</strong> {formatFechaLocal(cliente.fechaCreacion)}
-            </div>
-            <div>
-              <strong>Última modificación por:</strong>{" "}
-              {cliente.modificadoPor || "-"}
-              {" | "}
-              <strong>Fecha:</strong>{" "}
-              {formatFechaLocal(cliente.fechaModificacion)}
-            </div>
-          </div>
-          <h5>Registros detallados:</h5>
+        <div className="reporte-detalles">
+          <p>
+            <strong>Creado por:</strong> {cliente.creadoPor || "-"} |{" "}
+            <strong>Fecha:</strong>{" "}
+            {cliente.fechaCreacion
+              ? formatFechaLocal(cliente.fechaCreacion)
+              : "-"}
+          </p>
+          <p>
+            <strong>Última modificación por:</strong>{" "}
+            {cliente.modificadoPor || "-"} | <strong>Fecha:</strong>{" "}
+            {cliente.fechaActualizacion
+              ? formatFechaLocal(cliente.fechaActualizacion)
+              : "-"}
+          </p>
+          <h4>Registros detallados:</h4>
           <div className="registros-lista">
             {registrosOrdenados.map((registro) => (
               <div key={registro.id} className="registro-item">
                 <div className="registro-fecha">{registro.fecha}</div>
                 <div className="registro-horas">{registro.horas}h</div>
-                <div className="registro-monto">${registro.monto}</div>
+                <div className="registro-monto">${registro.monto} + IVA</div>
                 <div className="registro-descripcion">
                   {registro.descripcion || "Sin descripción"}
                 </div>

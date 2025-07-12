@@ -8,7 +8,7 @@ import "./RegistroHoraForm.css";
 // - initialData: datos iniciales para edición (opcional)
 // - onCancel: función para cancelar la edición (opcional)
 function RegistroHoraForm({
-  clientes,
+  clientes = [],
   onSubmit,
   initialData = null,
   onCancel,
