@@ -30,12 +30,7 @@ export const fetchRegistrosHoras = createAsyncThunk(
   "registrosHoras/fetchRegistrosHoras",
   async (_, { rejectWithValue }) => {
     try {
-      const registros = await getAllRegistrosHoras();
-      console.log(
-        "[DEBUG] fetchRegistrosHoras thunk: registros obtenidos:",
-        registros
-      );
-      return registros;
+      return await getAllRegistrosHoras();
     } catch (error) {
       console.error("[ERROR] fetchRegistrosHoras thunk:", error);
       return rejectWithValue(error.message);
@@ -111,11 +106,6 @@ const registrosHorasSlice = createSlice({
         };
       })
       .addCase(fetchRegistrosHoras.fulfilled, (state, action) => {
-        console.log(
-          "[DEBUG] fetchRegistrosHoras.fulfilled payload:",
-          action.payload
-        );
-
         // Validar que payload sea un array
         const registros = Array.isArray(action.payload) ? action.payload : [];
 
@@ -141,11 +131,6 @@ const registrosHorasSlice = createSlice({
         };
       })
       .addCase(addRegistroHora.fulfilled, (state, action) => {
-        console.log(
-          "[DEBUG] addRegistroHora.fulfilled payload:",
-          action.payload
-        );
-
         // Verificar que el payload sea un objeto válido
         if (!action.payload || typeof action.payload !== "object") {
           console.error(

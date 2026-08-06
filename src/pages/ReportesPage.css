@@ -161,6 +161,30 @@
   opacity: 0.8;
 }
 
+.moneda-kpi-group {
+  margin-bottom: 28px;
+}
+
+.moneda-kpi-titulo {
+  margin: 0 0 12px 0;
+  font-size: 0.85rem;
+}
+
+.sin-datos {
+  color: #8B4513;
+  opacity: 0.8;
+  padding: 12px 0 28px;
+}
+
+.clientes-chart h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.8rem;
+}
+
+.clientes-chart + .clientes-chart {
+  margin-top: 20px;
+}
+
 /* Sección de gráficos */
 .chart-section {
   margin-bottom: 32px;

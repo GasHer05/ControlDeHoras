@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import RegistroHoraItem from "./RegistroHoraItem.jsx";
+import { MONEDA_INFO } from "../../utils/currency";
 import "./RegistroHoraList.css";
 
 // Listado de registros de horas con búsqueda y filtros
@@ -8,10 +9,17 @@ import "./RegistroHoraList.css";
 // - clientes: array de clientes (para mostrar nombre)
 // - onEdit: función para editar un registro
 // - onDelete: función para eliminar un registro
-function RegistroHoraList({ registros, clientes, onEdit, onDelete }) {
+function RegistroHoraList({
+  registros,
+  clientes,
+  loading = false,
+  onEdit,
+  onDelete,
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("fecha"); // "fecha", "cliente", "horas", "monto"
   const [filterCliente, setFilterCliente] = useState("");
+  const [filterMoneda, setFilterMoneda] = useState("");
 
   // Filtrar y ordenar registros
   const filteredAndSortedRegistros = useMemo(() => {
@@ -37,6 +45,13 @@ function RegistroHoraList({ registros, clientes, onEdit, onDelete }) {
       );
     }
 
+    // Filtrar por moneda
+    if (filterMoneda) {
+      filtered = filtered.filter(
+        (registro) => (registro.moneda || "UYU") === filterMoneda
+      );
+    }
+
     // Ordenar
     filtered.sort((a, b) => {
       switch (sortBy) {
@@ -56,7 +71,16 @@ function RegistroHoraList({ registros, clientes, onEdit, onDelete }) {
     });
 
     return filtered;
-  }, [registros, clientes, searchTerm, sortBy, filterCliente]);
+  }, [registros, clientes, searchTerm, sortBy, filterCliente, filterMoneda]);
+
+  if (loading) {
+    return (
+      <div className="loading-state">
+        <span className="spinner"></span>
+        <span>Cargando registros...</span>
+      </div>
+    );
+  }
 
   if (registros.length === 0) {
     return (
@@ -108,6 +132,20 @@ function RegistroHoraList({ registros, clientes, onEdit, onDelete }) {
           </div>
 
           <div className="filter-group">
+            <label htmlFor="moneda-filter">Moneda:</label>
+            <select
+              id="moneda-filter"
+              value={filterMoneda}
+              onChange={(e) => setFilterMoneda(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">Todas</option>
+              <option value="UYU">{MONEDA_INFO.UYU.label}</option>
+              <option value="USD">{MONEDA_INFO.USD.label}</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
             <label htmlFor="sort-select">Ordenar por:</label>
             <select
               id="sort-select"
@@ -143,6 +181,7 @@ function RegistroHoraList({ registros, clientes, onEdit, onDelete }) {
               onClick={() => {
                 setSearchTerm("");
                 setFilterCliente("");
+                setFilterMoneda("");
                 setSortBy("fecha");
               }}
             >

@@ -36,36 +36,7 @@ export const fetchUsers = createAsyncThunk(
   "auth/fetchUsers",
   async (_, { rejectWithValue }) => {
     try {
-      const users = await getAllUsers();
-
-      // Función de depuración para verificar Timestamps
-      const checkForTimestamps = (obj, path = "") => {
-        for (const [key, value] of Object.entries(obj)) {
-          const currentPath = path ? `${path}.${key}` : key;
-          if (
-            value &&
-            typeof value === "object" &&
-            value.constructor &&
-            value.constructor.name === "Timestamp"
-          ) {
-            console.warn(`⚠️ Timestamp detectado en: ${currentPath}`, value);
-          } else if (
-            value &&
-            typeof value === "object" &&
-            !Array.isArray(value)
-          ) {
-            checkForTimestamps(value, currentPath);
-          }
-        }
-      };
-
-      // Verificar cada usuario
-      users.forEach((user, index) => {
-        checkForTimestamps(user, `users[${index}]`);
-      });
-
-      console.log("[DEBUG] Usuarios ya normalizados desde getAllUsers:", users);
-      return users;
+      return await getAllUsers();
     } catch (error) {
       return rejectWithValue(error.message);
     }

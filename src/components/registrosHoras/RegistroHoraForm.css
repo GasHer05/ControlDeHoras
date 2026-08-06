@@ -37,4 +37,46 @@
 
 .registro-hora-form .form-actions {
   justify-content: flex-end;
-} 
+}
+
+.moneda-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.moneda-opcion {
+  flex: 1;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.moneda-opcion.activa {
+  background: var(--color-brand);
+  color: white;
+  border-color: var(--color-brand);
+}
+
+.desglose-monto {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.desglose-linea {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  padding: 0.2rem 0;
+}
+
+.desglose-total {
+  border-top: 1px solid var(--color-border);
+  margin-top: 0.3rem;
+  padding-top: 0.5rem;
+  font-weight: 700;
+  color: var(--color-brand-dark);
+}

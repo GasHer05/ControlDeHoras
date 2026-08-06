@@ -17,7 +17,7 @@ import "./ClientesPage.css";
 // Página principal para gestión de clientes con sistema de pestañas
 function ClientesPage() {
   const clientes = useSelector(selectClientesDecrypted);
-  const clientesRaw = useSelector((state) => state.clientes.clientes);
+  const loading = useSelector((state) => state.clientes.loading);
   const usuario = useSelector(
     (state) =>
       state.auth.currentUser?.username ||
@@ -37,28 +37,14 @@ function ClientesPage() {
 
   // Cargar clientes al montar
   useEffect(() => {
-    dispatch(fetchClientes()).then(() => {
-      // Log después del fetch
-      setTimeout(() => {
-        // Espera a que Redux actualice el estado
-        // eslint-disable-next-line no-console
-        console.log("[DEBUG] clientesRaw tras fetch:", clientesRaw);
-      }, 500);
-    });
+    dispatch(fetchClientes());
   }, [dispatch]);
-
-  // Log en cada render
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("[DEBUG] clientes (desencriptados):", clientes);
-  }, [clientes]);
 
   // Agregar nuevo cliente
   const handleAgregar = (data) => {
     const clienteData = { ...data };
     if (usuario) clienteData.usuario = usuario;
     if (usuario) clienteData.creadoPor = usuario;
-    console.log("[DEBUG handleAgregar] clienteData:", clienteData);
     dispatch(addCliente(clienteData))
       .unwrap()
       .then(() => {
@@ -73,7 +59,6 @@ function ClientesPage() {
     const clienteData = { ...data };
     if (usuario) clienteData.usuario = usuario;
     if (usuario) clienteData.modificadoPor = usuario;
-    console.log("[DEBUG handleEditar] clienteData:", clienteData);
     dispatch(editCliente({ id: clienteEditando.id, clienteData }))
       .unwrap()
       .then(() => {
@@ -158,6 +143,7 @@ function ClientesPage() {
               </div>
               <ClienteList
                 clientes={clientes}
+                loading={loading && clientes.length === 0}
                 onEdit={handleIniciarEdicion}
                 onDelete={handleEliminar}
               />

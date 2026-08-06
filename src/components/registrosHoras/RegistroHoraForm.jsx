@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { calcularMonto } from "../../store/registrosHorasSlice";
+import { getTarifa, monedasDisponibles, calcularIVA } from "../../utils/tarifas";
+import { MONEDA_INFO, formatMoney } from "../../utils/currency";
 import "./RegistroHoraForm.css";
 
 // Formulario para agregar o editar un registro de horas
@@ -13,52 +17,80 @@ function RegistroHoraForm({
   initialData = null,
   onCancel,
 }) {
+  const ivaRate = useSelector((state) => state.config.ivaRate);
+
   const [clienteId, setClienteId] = useState("");
+  const [moneda, setMoneda] = useState("");
   const [fecha, setFecha] = useState("");
   const [horas, setHoras] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (initialData) {
       setClienteId(initialData.clienteId || "");
+      setMoneda(initialData.moneda || "UYU");
       setFecha(initialData.fecha || "");
       setHoras(initialData.horas || "");
       setDescripcion(initialData.descripcion || "");
     }
   }, [initialData]);
 
-  // Buscar datos del cliente seleccionado
   const cliente = clientes.find((c) => c.id === clienteId);
-  const valorHora = cliente?.valorHora || 0;
-  const tipoDescuento = cliente?.tipoDescuento || "";
-  const valorDescuento = cliente?.valorDescuento || "";
+  const monedasCliente = monedasDisponibles(cliente);
 
-  // Calcular monto con descuento
-  let monto = horas && valorHora ? Number(horas) * Number(valorHora) : 0;
-  let descuentoAplicado = 0;
-  if (tipoDescuento === "porcentaje" && valorDescuento) {
-    descuentoAplicado = monto * (valorDescuento / 100);
-  } else if (tipoDescuento === "monto" && valorDescuento) {
-    descuentoAplicado = Number(valorDescuento);
-  }
-  let montoFinal = monto - descuentoAplicado;
-  if (montoFinal < 0) montoFinal = 0;
-  montoFinal = Math.round(montoFinal * 100) / 100;
+  // Ajustar la moneda seleccionada cuando cambia el cliente
+  useEffect(() => {
+    if (!cliente) {
+      setMoneda("");
+      return;
+    }
+    if (!monedasCliente.includes(moneda)) {
+      setMoneda(monedasCliente[0] || "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteId]);
+
+  const tarifa = getTarifa(cliente, moneda);
+  const valorHora = tarifa?.valorHora || 0;
+  const tipoDescuento = tarifa?.tipoDescuento || "";
+  const valorDescuento = tarifa?.valorDescuento || "";
+
+  const montoFinal = calcularMonto(
+    Number(horas) || 0,
+    valorHora,
+    tipoDescuento,
+    valorDescuento
+  );
+  const descuentoAplicado =
+    horas && valorHora ? Number(horas) * valorHora - montoFinal : 0;
+  const iva = calcularIVA(montoFinal, ivaRate);
+  const totalConIva = Math.round((montoFinal + iva) * 100) / 100;
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!clienteId || !fecha || !horas) return; // Validación básica
+    setError("");
+    if (!clienteId || !fecha || !horas) {
+      setError("Completá cliente, fecha y horas.");
+      return;
+    }
+    if (!moneda) {
+      setError("El cliente seleccionado no tiene ninguna tarifa configurada.");
+      return;
+    }
     onSubmit({
       clienteId,
       fecha,
       horas: Number(horas),
       descripcion,
+      moneda,
       valorHora,
       tipoDescuento,
       valorDescuento,
     });
     if (!initialData) {
       setClienteId("");
+      setMoneda("");
       setFecha("");
       setHoras("");
       setDescripcion("");
@@ -75,13 +107,32 @@ function RegistroHoraForm({
           required
         >
           <option value="">Seleccionar cliente</option>
-          {clientes.map((cliente) => (
-            <option key={cliente.id} value={cliente.id}>
-              {cliente.nombre}
+          {clientes.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nombre}
             </option>
           ))}
         </select>
       </div>
+
+      {monedasCliente.length > 1 && (
+        <div>
+          <label>Moneda:</label>
+          <div className="moneda-selector">
+            {monedasCliente.map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={`moneda-opcion ${moneda === m ? "activa" : ""}`}
+                onClick={() => setMoneda(m)}
+              >
+                {MONEDA_INFO[m].label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div>
         <label>Fecha:</label>
         <input
@@ -110,19 +161,35 @@ function RegistroHoraForm({
           onChange={(e) => setDescripcion(e.target.value)}
         />
       </div>
-      <div>
-        <label>Monto calculado:</label>
-        <input type="text" value={montoFinal} readOnly />
-        {tipoDescuento && valorDescuento ? (
-          <div className="descuento-info">
-            Descuento aplicado:{" "}
-            {tipoDescuento === "porcentaje"
-              ? `${valorDescuento}%`
-              : `$${valorDescuento}`}{" "}
-            ({descuentoAplicado > 0 ? `-$${descuentoAplicado.toFixed(2)}` : ""})
+
+      {moneda && (
+        <div className="desglose-monto">
+          <div className="desglose-linea">
+            <span>Subtotal</span>
+            <span>{formatMoney(montoFinal, moneda)}</span>
           </div>
-        ) : null}
-      </div>
+          {tipoDescuento && valorDescuento ? (
+            <div className="descuento-info">
+              Descuento aplicado:{" "}
+              {tipoDescuento === "porcentaje"
+                ? `${valorDescuento}%`
+                : formatMoney(valorDescuento, moneda)}{" "}
+              ({descuentoAplicado > 0 ? `-${formatMoney(descuentoAplicado, moneda)}` : ""})
+            </div>
+          ) : null}
+          <div className="desglose-linea">
+            <span>IVA ({ivaRate}%)</span>
+            <span>{formatMoney(iva, moneda)}</span>
+          </div>
+          <div className="desglose-linea desglose-total">
+            <span>Total</span>
+            <span>{formatMoney(totalConIva, moneda)}</span>
+          </div>
+        </div>
+      )}
+
+      {error && <span className="field-error">{error}</span>}
+
       <div className="form-actions">
         <button type="submit">
           {initialData ? "Guardar cambios" : "Registrar horas"}

@@ -1,13 +1,23 @@
 import React, { useState, useMemo } from "react";
 import ClienteItem from "./ClienteItem.jsx";
+import { MONEDAS } from "../../utils/currency";
+import { getTarifa } from "../../utils/tarifas";
 import "./ClienteList.css";
+
+// Mayor valor/hora configurado entre las monedas del cliente (para ordenar)
+function tarifaMaxima(cliente) {
+  return MONEDAS.reduce((max, moneda) => {
+    const tarifa = getTarifa(cliente, moneda);
+    return tarifa?.valorHora ? Math.max(max, tarifa.valorHora) : max;
+  }, 0);
+}
 
 // Listado de clientes con búsqueda y filtros
 // Props:
 // - clientes: array de clientes
 // - onEdit: función para editar un cliente
 // - onDelete: función para eliminar un cliente
-function ClienteList({ clientes, onEdit, onDelete }) {
+function ClienteList({ clientes, loading = false, onEdit, onDelete }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("nombre"); // "nombre", "valorHora", "fechaCreacion"
 
@@ -33,7 +43,7 @@ function ClienteList({ clientes, onEdit, onDelete }) {
         case "nombre":
           return (a.nombre || "").localeCompare(b.nombre || "");
         case "valorHora":
-          return (b.valorHora || 0) - (a.valorHora || 0);
+          return tarifaMaxima(b) - tarifaMaxima(a);
         case "fechaCreacion":
           return (
             new Date(b.fechaCreacion || 0) - new Date(a.fechaCreacion || 0)
@@ -45,6 +55,15 @@ function ClienteList({ clientes, onEdit, onDelete }) {
 
     return filtered;
   }, [clientes, searchTerm, sortBy]);
+
+  if (loading) {
+    return (
+      <div className="loading-state">
+        <span className="spinner"></span>
+        <span>Cargando clientes...</span>
+      </div>
+    );
+  }
 
   if (clientes.length === 0) {
     return (

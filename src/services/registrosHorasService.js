@@ -136,24 +136,8 @@ function normalizeRegistroHora(docOrData, idFromDoc = null) {
 // CRUD básico
 export const getAllRegistrosHoras = async () => {
   try {
-    console.log("[DEBUG] getAllRegistrosHoras: iniciando...");
     const querySnapshot = await getDocs(collection(db, COLLECTION_NAME));
-    console.log(
-      "[DEBUG] getAllRegistrosHoras: querySnapshot.docs.length:",
-      querySnapshot.docs.length
-    );
-
-    const registros = querySnapshot.docs.map((doc) => {
-      const normalized = normalizeRegistroHora(doc);
-      console.log(
-        "[DEBUG] getAllRegistrosHoras: registro normalizado:",
-        normalized
-      );
-      return normalized;
-    });
-
-    console.log("[DEBUG] getAllRegistrosHoras: registros finales:", registros);
-    return registros;
+    return querySnapshot.docs.map((doc) => normalizeRegistroHora(doc));
   } catch (error) {
     console.error("[ERROR] getAllRegistrosHoras:", error);
     throw error;
@@ -183,10 +167,6 @@ export const getRegistroByUniqueFields = async (userId, clienteId, fecha) => {
 
 export const createRegistroHora = async (registroData) => {
   try {
-    console.log(
-      "[DEBUG] createRegistroHora: registroData recibido:",
-      registroData
-    );
     // Filtrar campos undefined para evitar errores de Firestore
     const cleanData = Object.fromEntries(
       Object.entries(registroData).filter(([key, value]) => value !== undefined)
@@ -197,18 +177,8 @@ export const createRegistroHora = async (registroData) => {
       fechaCreacion: cleanData.fechaCreacion || new Date(),
       fechaActualizacion: new Date(),
     };
-    console.log(
-      "[DEBUG] createRegistroHora: newRegistro antes de guardar:",
-      newRegistro
-    );
     const docRef = await addDoc(collection(db, COLLECTION_NAME), newRegistro);
-    console.log("[DEBUG] createRegistroHora: docRef.id:", docRef.id);
-    const resultado = normalizeRegistroHora({ id: docRef.id, ...newRegistro });
-    console.log(
-      "[DEBUG] createRegistroHora: resultado normalizado:",
-      resultado
-    );
-    return resultado;
+    return normalizeRegistroHora({ id: docRef.id, ...newRegistro });
   } catch (error) {
     console.error("[ERROR] createRegistroHora:", error);
     throw error;
@@ -234,14 +204,8 @@ export const updateRegistroHora = async (id, registroData) => {
         cleanData.fechaCreacion || original.fechaCreacion || new Date(),
       fechaModificacion: new Date(),
     };
-    console.log("[DEBUG] updateRegistroHora: updateData:", updateData);
     await updateDoc(docRef, updateData);
-    const resultado = normalizeRegistroHora({ id, ...updateData });
-    console.log(
-      "[DEBUG] updateRegistroHora: resultado normalizado:",
-      resultado
-    );
-    return resultado;
+    return normalizeRegistroHora({ id, ...updateData });
   } catch (error) {
     console.error("[ERROR] updateRegistroHora:", error);
     throw error;

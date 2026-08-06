@@ -17,6 +17,7 @@ function RegistrosHorasPage() {
   const registros = useSelector(
     (state) => state.registrosHoras?.registros ?? []
   );
+  const loading = useSelector((state) => state.registrosHoras?.loading);
   const clientes = useSelector((state) => state.clientes.clientes);
   const currentUser = useSelector((state) => state.auth.currentUser);
 
@@ -26,10 +27,6 @@ function RegistrosHorasPage() {
     currentUser?.username ||
     currentUser?.usuario ||
     "Usuario";
-
-  // Log para depurar
-  console.log("[DEBUG] RegistrosHorasPage - currentUser:", currentUser);
-  console.log("[DEBUG] RegistrosHorasPage - usuario:", usuario);
 
   const dispatch = useDispatch();
 
@@ -168,6 +165,7 @@ function RegistrosHorasPage() {
 
               <RegistroHoraList
                 registros={registrosFiltrados}
+                loading={loading && registros.length === 0}
                 clientes={clientes}
                 onEdit={handleIniciarEdicion}
                 onDelete={handleEliminar}

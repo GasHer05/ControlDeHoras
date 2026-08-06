@@ -13,7 +13,6 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { hashPassword } from "../utils/encryption";
-import { getPasswordSalt } from "../config/security";
 
 const COLLECTION_NAME = "usuarios";
 
@@ -287,20 +286,7 @@ export const verifyUserCredentials = async (username, password) => {
     }
 
     // Verificar contraseña
-    const salt = `${getPasswordSalt()}_${username}`;
     const passwordHash = hashPassword(password, username);
-    console.log(
-      "[DEBUG LOGIN] username:",
-      username,
-      "| password:",
-      password,
-      "| salt:",
-      salt,
-      "| hash calculado:",
-      passwordHash,
-      "| hash Firestore:",
-      user.passwordHash
-    );
 
     if (user.passwordHash === passwordHash) {
       return {

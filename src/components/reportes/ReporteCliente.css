@@ -30,9 +30,21 @@
   font-size: 0.9rem;
 }
 
+.estadisticas-por-moneda {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.estadisticas-moneda-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
 .estadisticas-cliente {
   display: flex;
-  gap: 2rem;
+  gap: 1.2rem;
   flex-wrap: wrap;
 }
 

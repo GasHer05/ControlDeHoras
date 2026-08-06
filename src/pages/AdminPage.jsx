@@ -10,8 +10,50 @@ import {
 } from "../store/authSlice";
 import { exportAuditLogs, getAuditLogs } from "../utils/auditLogger";
 import { exportBackup } from "../utils/backupManager";
+import { updateIvaRate } from "../store/configSlice";
 import { toast } from "react-toastify";
 import "./AdminPage.css";
+
+// Sección para editar la tasa de IVA global usada en cálculos y reportes
+function ConfiguracionSection() {
+  const dispatch = useDispatch();
+  const ivaRateActual = useSelector((state) => state.config.ivaRate);
+  const [ivaRate, setIvaRate] = useState(ivaRateActual);
+
+  React.useEffect(() => {
+    setIvaRate(ivaRateActual);
+  }, [ivaRateActual]);
+
+  const handleGuardar = () => {
+    dispatch(updateIvaRate(ivaRate))
+      .unwrap()
+      .then(() => toast.success("Tasa de IVA actualizada"))
+      .catch(() => toast.error("Error al actualizar la tasa de IVA"));
+  };
+
+  return (
+    <div className="configuracion-section">
+      <h3>Configuración General</h3>
+      <div className="config-item">
+        <label>Tasa de IVA (%):</label>
+        <div className="config-item-controls">
+          <input
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            value={ivaRate}
+            onChange={(e) => setIvaRate(e.target.value)}
+          />
+          <button onClick={handleGuardar}>Guardar</button>
+        </div>
+        <p className="config-item-hint">
+          Se usa para calcular el IVA en registros de horas, reportes y PDFs.
+        </p>
+      </div>
+    </div>
+  );
+}
 
 // Componente de formulario para editar usuarios
 function EditUserForm({ user, onSubmit, onCancel }) {
@@ -531,6 +573,8 @@ function AdminPage() {
           onCancel={() => setEditingUser(null)}
         />
       )}
+
+      <ConfiguracionSection />
 
       <UserList
         users={users}

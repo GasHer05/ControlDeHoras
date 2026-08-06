@@ -40,7 +40,7 @@ export const addCliente = createAsyncThunk(
       });
       return result;
     } catch (error) {
-      console.error("[DEBUG addCliente thunk][catch] error:", error);
+      console.error("Error al crear cliente:", error);
       return rejectWithValue(error.message);
     }
   }

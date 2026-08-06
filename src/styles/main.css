@@ -1,11 +1,47 @@
 /* main.css - Estilos globales minimalistas y profesionales */
 
+:root {
+  /* Paleta de marca (misma familia de colores que la navbar) */
+  --color-brand-dark: #3e2723;
+  --color-brand: #8b4513;
+  --color-brand-light: #a86a3d;
+  --color-brand-gold: #d4af37;
+  --color-brand-tint: rgba(139, 69, 19, 0.08);
+  --color-brand-tint-strong: rgba(139, 69, 19, 0.15);
+
+  --color-bg: #f7f8fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f8fa;
+  --color-border: #e0e4ea;
+  --color-text: #24211f;
+  --color-text-muted: #6b6560;
+
+  --color-success: #16a34a;
+  --color-danger: #dc3545;
+  --color-danger-tint: rgba(220, 53, 69, 0.1);
+
+  /* Colores distintivos por moneda: nunca deben mezclarse visualmente */
+  --color-uyu: #0f766e;
+  --color-uyu-tint: rgba(15, 118, 110, 0.1);
+  --color-usd: #1d4ed8;
+  --color-usd-tint: rgba(29, 78, 216, 0.1);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(139, 69, 19, 0.15);
+}
+
 html, body {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
-  background: #f7f8fa;
-  color: #222;
+  background: var(--color-bg);
+  color: var(--color-text);
   min-height: 100vh;
 }
 
@@ -13,8 +49,8 @@ html, body {
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1rem;
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
   border-radius: 10px;
 }
 
@@ -160,7 +196,9 @@ html, body {
 }
 
 .dropdown-menu a {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   padding: 10px 12px;
   color: #3E2723;
   text-decoration: none;
@@ -168,6 +206,11 @@ html, body {
   transition: all 0.2s ease;
   font-size: 0.95rem;
   font-weight: 500;
+}
+
+.icon {
+  flex-shrink: 0;
+  vertical-align: middle;
 }
 
 .dropdown-menu a:hover {
@@ -200,6 +243,9 @@ html, body {
 .btn-menu-action,
 .btn-menu-logout {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   padding: 10px 12px;
   border: none;
   border-radius: 8px;
@@ -345,52 +391,129 @@ html, body {
 }
 
 h1 {
-  color: #333;
+  color: var(--color-brand-dark);
   font-size: 2rem;
   margin-bottom: 1.5rem;
   font-weight: 600;
 }
 
 button {
-  background: #3b82f6;
+  background: var(--color-brand);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
 }
 
 button:hover {
-  background: #2563eb;
+  background: var(--color-brand-dark);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  background: #c9c4bf;
+  cursor: not-allowed;
+  transform: none;
 }
 
 input, select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   font-size: 1rem;
   transition: border-color 0.2s;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 input:focus, select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px var(--color-brand-tint-strong);
 }
 
 label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-text-muted);
 }
 
 .form-actions {
   display: flex;
   gap: 1rem;
   margin-top: 1.5rem;
-} 
+}
+
+/* Badges de moneda reutilizables en toda la app */
+.badge-moneda {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badge-uyu {
+  background: var(--color-uyu-tint);
+  color: var(--color-uyu);
+}
+
+.badge-usd {
+  background: var(--color-usd-tint);
+  color: var(--color-usd);
+}
+
+/* Estados de carga simples */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 2rem 1rem;
+  color: var(--color-text-muted);
+}
+
+.spinner {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-brand);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-danger {
+  background: var(--color-danger-tint);
+  color: var(--color-danger);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger);
+  color: white;
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  margin-top: -0.6rem;
+  margin-bottom: 0.8rem;
+  display: block;
+}

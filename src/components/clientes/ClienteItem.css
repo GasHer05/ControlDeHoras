@@ -3,12 +3,60 @@
 .cliente-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: #f7f8fa;
-  border: 1px solid #e0e4ea;
-  border-radius: 7px;
+  align-items: flex-start;
+  gap: 1rem;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   padding: 1rem 1.2rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.cliente-item:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-brand-light);
+}
+
+.cliente-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cliente-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.3rem;
+}
+
+.cliente-item-badges {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.cliente-item-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.2rem 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.cliente-item-meta strong {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.cliente-item-tarifas {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.cliente-item-tarifa {
+  font-size: 0.92rem;
 }
 
 /* Responsive design */
@@ -19,12 +67,12 @@
     gap: 1rem;
     padding: 1rem;
   }
-  
+
   .cliente-item .item-actions {
     width: 100%;
     justify-content: space-between;
   }
-  
+
   .cliente-item .item-actions button {
     flex: 1;
     margin: 0 0.2rem;
@@ -34,12 +82,13 @@
 .cliente-item .item-actions {
   display: flex;
   gap: 0.7rem;
+  flex-shrink: 0;
 }
 
 .descuento-info {
-  color: #16a34a;
+  color: var(--color-success);
   font-size: 0.95rem;
   font-weight: 500;
   margin-top: 0.2rem;
   display: inline-block;
-} 
+}

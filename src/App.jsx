@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "./store/authSlice";
+import { fetchConfig } from "./store/configSlice";
 import ClientesPage from "./pages/ClientesPage.jsx";
 import RegistrosHorasPage from "./pages/RegistrosHorasPage.jsx";
 import ReportesPage from "./pages/ReportesPage.jsx";
@@ -18,6 +19,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import ChangePasswordForm from "./components/auth/ChangePasswordForm.jsx";
 import FirebaseTest from "./components/FirebaseTest.jsx";
 import MigrationTool from "./components/MigrationTool.jsx";
+import Icon from "./components/comunes/Icon.jsx";
 import "./styles/main.css";
 import {
   isAdmin,
@@ -25,9 +27,6 @@ import {
   isAdminOrManager,
   hasPermission,
 } from "./config/admin";
-
-// Importar debug temporal
-// import "./utils/debugAuth.js";
 
 function getUserDisplayName(user) {
   return user?.username || user?.fullName || user?.usuario || "-";
@@ -62,6 +61,10 @@ function App() {
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
+
+  useEffect(() => {
+    if (isAuthenticated) dispatch(fetchConfig());
+  }, [isAuthenticated, dispatch]);
 
   // Cerrar menú al hacer clic fuera
   useEffect(() => {
@@ -118,17 +121,17 @@ function App() {
                     <ul className="dropdown-menu">
                       <li>
                         <Link to="/clientes" onClick={closeMenu}>
-                          👥 Clientes
+                          <Icon name="clientes" /> Clientes
                         </Link>
                       </li>
                       <li>
                         <Link to="/registros-horas" onClick={closeMenu}>
-                          ⏰ Registros de Horas
+                          <Icon name="reloj" /> Registros de Horas
                         </Link>
                       </li>
                       <li>
                         <Link to="/reportes" onClick={closeMenu}>
-                          📊 Reportes
+                          <Icon name="grafico" /> Reportes
                         </Link>
                       </li>
                     </ul>
@@ -140,22 +143,22 @@ function App() {
                       <ul className="dropdown-menu">
                         <li>
                           <Link to="/firebase-test" onClick={closeMenu}>
-                            🧪 Test Firebase
+                            <Icon name="engranaje" /> Test Firebase
                           </Link>
                         </li>
                         <li>
                           <Link to="/migration" onClick={closeMenu}>
-                            🔄 Migración
+                            <Icon name="engranaje" /> Migración
                           </Link>
                         </li>
                         <li>
                           <Link to="/auditoria" onClick={closeMenu}>
-                            📋 Auditoría
+                            <Icon name="auditoria" /> Auditoría
                           </Link>
                         </li>
                         <li>
                           <Link to="/admin" onClick={closeMenu}>
-                            ⚙️ Administración
+                            <Icon name="engranaje" /> Administración
                           </Link>
                         </li>
                       </ul>
@@ -174,13 +177,13 @@ function App() {
                         onClick={handleChangePassword}
                         className="btn-menu-action"
                       >
-                        🔐 Cambiar Contraseña
+                        <Icon name="llave" /> Cambiar Contraseña
                       </button>
                       <button
                         onClick={handleLogout}
                         className="btn-menu-logout"
                       >
-                        🚪 Cerrar Sesión
+                        <Icon name="salir" /> Cerrar Sesión
                       </button>
                     </div>
                   </div>

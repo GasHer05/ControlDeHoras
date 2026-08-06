@@ -3,7 +3,13 @@ import { useSelector } from "react-redux";
 import ReporteCliente from "../components/reportes/ReporteCliente.jsx";
 import FiltroFechas from "../components/comunes/FiltroFechas.jsx";
 import { isAdminOrManager, hasPermission } from "../config/admin";
+import { MONEDAS, MONEDA_INFO, formatMoney } from "../utils/currency";
+import { calcularIVA } from "../utils/tarifas";
 import "./ReportesPage.css";
+
+function estadisticasVacias() {
+  return { totalHoras: 0, totalMonto: 0, totalRegistros: 0 };
+}
 
 // Dashboard de reportes con diseño moderno y visual
 function ReportesPage() {
@@ -16,6 +22,7 @@ function ReportesPage() {
       : []
   );
   const currentUser = useSelector((state) => state.auth.currentUser);
+  const ivaRate = useSelector((state) => state.config.ivaRate);
 
   // Verificar permisos
   const canExportData = hasPermission(currentUser, "EXPORT_DATA");
@@ -36,39 +43,57 @@ function ReportesPage() {
     });
   }, [registros, filtro]);
 
-  // Calcular estadísticas generales
-  const estadisticasGenerales = useMemo(() => {
-    const totalHoras = registrosFiltrados.reduce((sum, r) => sum + r.horas, 0);
-    const totalMonto = registrosFiltrados.reduce((sum, r) => sum + r.monto, 0);
-    const totalRegistros = registrosFiltrados.length;
-    const clientesActivos = new Set(registrosFiltrados.map((r) => r.clienteId))
-      .size;
-    const promedioPorRegistro =
-      totalRegistros > 0 ? totalMonto / totalRegistros : 0;
-
+  // Estadísticas generales que sí pueden combinarse entre monedas (horas, cantidad
+  // de registros, clientes activos) porque no son montos de dinero.
+  const resumenGeneral = useMemo(() => {
+    const clientesSet = new Set(registrosFiltrados.map((r) => r.clienteId));
     return {
-      totalHoras,
-      totalMonto,
-      totalRegistros,
-      clientesActivos,
-      promedioPorRegistro,
+      totalHoras: registrosFiltrados.reduce((sum, r) => sum + r.horas, 0),
+      totalRegistros: registrosFiltrados.length,
+      clientesActivos: clientesSet.size,
     };
   }, [registrosFiltrados]);
 
-  // Calcular estadísticas por cliente
+  // Estadísticas de facturación agrupadas por moneda: nunca se suma UYU con USD
+  const estadisticasPorMoneda = useMemo(() => {
+    const stats = { UYU: estadisticasVacias(), USD: estadisticasVacias() };
+    registrosFiltrados.forEach((r) => {
+      const moneda = r.moneda || "UYU";
+      if (!stats[moneda]) stats[moneda] = estadisticasVacias();
+      stats[moneda].totalHoras += r.horas;
+      stats[moneda].totalMonto += r.monto;
+      stats[moneda].totalRegistros += 1;
+    });
+    Object.keys(stats).forEach((moneda) => {
+      const s = stats[moneda];
+      s.totalIVA = calcularIVA(s.totalMonto, ivaRate);
+      s.totalConIVA = Math.round((s.totalMonto + s.totalIVA) * 100) / 100;
+      s.promedioPorRegistro =
+        s.totalRegistros > 0 ? s.totalMonto / s.totalRegistros : 0;
+    });
+    return stats;
+  }, [registrosFiltrados, ivaRate]);
+
+  const monedasConDatos = MONEDAS.filter(
+    (m) => estadisticasPorMoneda[m]?.totalRegistros > 0
+  );
+
+  // Estadísticas por cliente, agrupadas también por moneda
   const estadisticasPorCliente = useMemo(() => {
     const stats = {};
     registrosFiltrados.forEach((registro) => {
-      if (!stats[registro.clienteId]) {
-        stats[registro.clienteId] = {
+      const moneda = registro.moneda || "UYU";
+      if (!stats[registro.clienteId]) stats[registro.clienteId] = {};
+      if (!stats[registro.clienteId][moneda]) {
+        stats[registro.clienteId][moneda] = {
           horas: 0,
           monto: 0,
           registros: 0,
         };
       }
-      stats[registro.clienteId].horas += registro.horas;
-      stats[registro.clienteId].monto += registro.monto;
-      stats[registro.clienteId].registros += 1;
+      stats[registro.clienteId][moneda].horas += registro.horas;
+      stats[registro.clienteId][moneda].monto += registro.monto;
+      stats[registro.clienteId][moneda].registros += 1;
     });
     return stats;
   }, [registrosFiltrados]);
@@ -78,7 +103,7 @@ function ReportesPage() {
     const reporteData = {
       fecha: new Date().toISOString(),
       filtros: filtro,
-      estadisticas: estadisticasGenerales,
+      estadisticas: estadisticasPorMoneda,
       registros: registrosFiltrados,
       clienteSeleccionado: clienteSeleccionado,
     };
@@ -99,7 +124,7 @@ function ReportesPage() {
       fecha: new Date().toISOString(),
       registros: registrosFiltrados,
       clientes: clientes,
-      estadisticas: estadisticasGenerales,
+      estadisticas: estadisticasPorMoneda,
     };
 
     const dataStr = JSON.stringify(datosExport, null, 2);
@@ -178,35 +203,17 @@ function ReportesPage() {
       <div className="dashboard-content">
         {activeSection === "dashboard" && (
           <div className="dashboard-section">
-            {/* Tarjetas de KPIs */}
+            {/* KPIs generales (no monetarios, se pueden combinar) */}
             <div className="kpi-cards">
-              <div className="kpi-card">
-                <div className="kpi-icon">💰</div>
-                <div className="kpi-content">
-                  <h3>Total Facturado</h3>
-                  <div className="kpi-value">
-                    ${estadisticasGenerales.totalMonto.toFixed(2)} + IVA
-                  </div>
-                  <div className="kpi-subtitle">
-                    {estadisticasGenerales.totalRegistros} registros
-                  </div>
-                </div>
-              </div>
-
               <div className="kpi-card">
                 <div className="kpi-icon">⏰</div>
                 <div className="kpi-content">
                   <h3>Horas Trabajadas</h3>
                   <div className="kpi-value">
-                    {estadisticasGenerales.totalHoras.toFixed(1)}h
+                    {resumenGeneral.totalHoras.toFixed(1)}h
                   </div>
                   <div className="kpi-subtitle">
-                    Promedio:{" "}
-                    {(
-                      estadisticasGenerales.totalHoras /
-                      Math.max(estadisticasGenerales.totalRegistros, 1)
-                    ).toFixed(1)}
-                    h/registro
+                    {resumenGeneral.totalRegistros} registros
                   </div>
                 </div>
               </div>
@@ -216,65 +223,109 @@ function ReportesPage() {
                 <div className="kpi-content">
                   <h3>Clientes Activos</h3>
                   <div className="kpi-value">
-                    {estadisticasGenerales.clientesActivos}
+                    {resumenGeneral.clientesActivos}
                   </div>
                   <div className="kpi-subtitle">de {clientes.length} total</div>
                 </div>
               </div>
-
-              <div className="kpi-card">
-                <div className="kpi-icon">📈</div>
-                <div className="kpi-content">
-                  <h3>Promedio por Registro</h3>
-                  <div className="kpi-value">
-                    ${estadisticasGenerales.promedioPorRegistro.toFixed(2)} +
-                    IVA
-                  </div>
-                  <div className="kpi-subtitle">Valor promedio</div>
-                </div>
-              </div>
             </div>
 
-            {/* Gráfico de clientes más activos */}
-            <div className="chart-section">
-              <h3>📊 Top Clientes por Facturación</h3>
-              <div className="clientes-chart">
-                {clientes
-                  .map((cliente) => ({
-                    ...cliente,
-                    ...estadisticasPorCliente[cliente.id],
-                  }))
-                  .filter((cliente) => cliente.monto > 0)
-                  .sort((a, b) => b.monto - a.monto)
-                  .slice(0, 5)
-                  .map((cliente, index) => (
-                    <div key={cliente.id} className="cliente-bar">
-                      <div className="bar-info">
-                        <span className="cliente-nombre">{cliente.nombre}</span>
-                        <span className="cliente-monto">
-                          ${cliente.monto.toFixed(2)} + IVA
-                        </span>
-                      </div>
-                      <div className="bar-container">
-                        <div
-                          className="bar-fill"
-                          style={{
-                            width: `${
-                              (cliente.monto /
-                                Math.max(
-                                  ...clientes.map(
-                                    (c) =>
-                                      estadisticasPorCliente[c.id]?.monto || 0
-                                  )
-                                )) *
-                              100
-                            }%`,
-                          }}
-                        ></div>
+            {/* Facturación por moneda: nunca se mezcla UYU con USD */}
+            {monedasConDatos.length === 0 ? (
+              <p className="sin-datos">No hay facturación en el período seleccionado.</p>
+            ) : (
+              <div className="facturacion-por-moneda">
+                {monedasConDatos.map((moneda) => {
+                  const s = estadisticasPorMoneda[moneda];
+                  return (
+                    <div key={moneda} className="moneda-kpi-group">
+                      <h3 className={`moneda-kpi-titulo badge-moneda badge-${moneda.toLowerCase()}`}>
+                        {MONEDA_INFO[moneda].label}
+                      </h3>
+                      <div className="kpi-cards">
+                        <div className="kpi-card">
+                          <div className="kpi-icon">💰</div>
+                          <div className="kpi-content">
+                            <h3>Subtotal</h3>
+                            <div className="kpi-value">
+                              {formatMoney(s.totalMonto, moneda)}
+                            </div>
+                            <div className="kpi-subtitle">
+                              {s.totalRegistros} registros
+                            </div>
+                          </div>
+                        </div>
+                        <div className="kpi-card">
+                          <div className="kpi-icon">🧾</div>
+                          <div className="kpi-content">
+                            <h3>Total con IVA ({ivaRate}%)</h3>
+                            <div className="kpi-value">
+                              {formatMoney(s.totalConIVA, moneda)}
+                            </div>
+                            <div className="kpi-subtitle">
+                              IVA: {formatMoney(s.totalIVA, moneda)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="kpi-card">
+                          <div className="kpi-icon">📈</div>
+                          <div className="kpi-content">
+                            <h3>Promedio por Registro</h3>
+                            <div className="kpi-value">
+                              {formatMoney(s.promedioPorRegistro, moneda)}
+                            </div>
+                            <div className="kpi-subtitle">Valor promedio</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
               </div>
+            )}
+
+            {/* Gráfico de clientes más activos, un ranking por moneda */}
+            <div className="chart-section">
+              <h3>📊 Top Clientes por Facturación</h3>
+              {monedasConDatos.map((moneda) => {
+                const top = clientes
+                  .map((cliente) => ({
+                    ...cliente,
+                    stat: estadisticasPorCliente[cliente.id]?.[moneda],
+                  }))
+                  .filter((cliente) => cliente.stat && cliente.stat.monto > 0)
+                  .sort((a, b) => b.stat.monto - a.stat.monto)
+                  .slice(0, 5);
+
+                if (top.length === 0) return null;
+                const maxMonto = Math.max(...top.map((c) => c.stat.monto), 1);
+
+                return (
+                  <div key={moneda} className="clientes-chart">
+                    <h4 className={`badge-moneda badge-${moneda.toLowerCase()}`}>
+                      {MONEDA_INFO[moneda].label}
+                    </h4>
+                    {top.map((cliente) => (
+                      <div key={cliente.id} className="cliente-bar">
+                        <div className="bar-info">
+                          <span className="cliente-nombre">{cliente.nombre}</span>
+                          <span className="cliente-monto">
+                            {formatMoney(cliente.stat.monto, moneda)}
+                          </span>
+                        </div>
+                        <div className="bar-container">
+                          <div
+                            className="bar-fill"
+                            style={{
+                              width: `${(cliente.stat.monto / maxMonto) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Información del usuario para managers */}
