@@ -6,6 +6,7 @@ import {
   isUsernameAvailable,
   generateUsernameSuggestions,
 } from "../../utils/userUtils";
+import PasswordInput from "../comunes/PasswordInput";
 import "./RegisterForm.css";
 
 // Componente de formulario de registro
@@ -162,8 +163,7 @@ function RegisterForm({ onSwitchToLogin }) {
 
           <div>
             <label>Contraseña:</label>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={validationErrors.password ? "error" : ""}
@@ -175,8 +175,7 @@ function RegisterForm({ onSwitchToLogin }) {
 
           <div>
             <label>Confirmar Contraseña:</label>
-            <input
-              type="password"
+            <PasswordInput
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className={validationErrors.confirmPassword ? "error" : ""}

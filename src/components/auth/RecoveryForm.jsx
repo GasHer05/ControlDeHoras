@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { recoveryPasswordUser, clearMessages } from "../../store/authSlice";
+import PasswordInput from "../comunes/PasswordInput";
 import "./RecoveryForm.css";
 
 // Componente de recuperación de contraseña
@@ -174,8 +175,7 @@ function RecoveryForm({ onSwitchToLogin }) {
     <form className="auth-form" onSubmit={handleStep3}>
       <div>
         <label>Nueva Contraseña:</label>
-        <input
-          type="password"
+        <PasswordInput
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           className={validationErrors.newPassword ? "error" : ""}
@@ -194,8 +194,7 @@ function RecoveryForm({ onSwitchToLogin }) {
 
       <div>
         <label>Confirmar Nueva Contraseña:</label>
-        <input
-          type="password"
+        <PasswordInput
           value={confirmNewPassword}
           onChange={(e) => setConfirmNewPassword(e.target.value)}
           className={validationErrors.confirmNewPassword ? "error" : ""}

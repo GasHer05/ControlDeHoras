@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, clearMessages } from "../../store/authSlice";
+import PasswordInput from "../comunes/PasswordInput";
 
 import "./LoginForm.css";
 
@@ -73,8 +74,7 @@ function LoginForm({ onSwitchToRegister }) {
 
           <div>
             <label>Contraseña:</label>
-            <input
-              type="password"
+            <PasswordInput
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={validationErrors.password ? "error" : ""}

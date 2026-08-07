@@ -12,6 +12,7 @@ import { exportAuditLogs, getAuditLogs } from "../utils/auditLogger";
 import { exportBackup } from "../utils/backupManager";
 import { updateIvaRate } from "../store/configSlice";
 import { toast } from "react-toastify";
+import PasswordInput from "../components/comunes/PasswordInput";
 import "./AdminPage.css";
 
 // Sección para editar la tasa de IVA global usada en cálculos y reportes
@@ -242,8 +243,7 @@ function CreateUserForm({ onSubmit, onCancel }) {
 
         <div>
           <label>Contraseña:</label>
-          <input
-            type="password"
+          <PasswordInput
             value={formData.password}
             onChange={(e) =>
               setFormData({ ...formData, password: e.target.value })
@@ -257,8 +257,7 @@ function CreateUserForm({ onSubmit, onCancel }) {
 
         <div>
           <label>Confirmar Contraseña:</label>
-          <input
-            type="password"
+          <PasswordInput
             value={formData.confirmPassword}
             onChange={(e) =>
               setFormData({ ...formData, confirmPassword: e.target.value })
