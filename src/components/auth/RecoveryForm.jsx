@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { recoveryPasswordUser, clearMessages } from "../../store/authSlice";
+import { getUserByUsername } from "../../services/userService";
 import PasswordInput from "../comunes/PasswordInput";
 import "./RecoveryForm.css";
 
@@ -92,12 +93,20 @@ function RecoveryForm({ onSwitchToLogin }) {
     return Object.keys(errors).length === 0;
   };
 
-  const handleStep1 = (e) => {
+  const handleStep1 = async (e) => {
     e.preventDefault();
-    if (validateFields()) {
-      // Simular verificación de usuario y obtener pregunta de seguridad
+    if (!validateFields()) return;
+
+    try {
+      const user = await getUserByUsername(username.trim());
+      if (!user) {
+        setValidationErrors({ username: "El usuario no existe" });
+        return;
+      }
       setSecurityQuestion("¿Cuál es el nombre de tu primera mascota?");
       setStep(2);
+    } catch (err) {
+      setValidationErrors({ username: "Error verificando el usuario" });
     }
   };
 
