@@ -1,10 +1,13 @@
-import React, { useState, useMemo } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useMemo, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import ReporteCliente from "../components/reportes/ReporteCliente.jsx";
 import FiltroFechas from "../components/comunes/FiltroFechas.jsx";
 import { isAdminOrManager, hasPermission } from "../config/admin";
 import { MONEDAS, MONEDA_INFO, formatMoney } from "../utils/currency";
 import { calcularIVA } from "../utils/tarifas";
+import { fetchClientes } from "../store/clientesSlice";
+import { fetchRegistrosHoras } from "../store/registrosHorasSlice";
+import { selectClientesDecrypted } from "../utils/selectors";
 import "./ReportesPage.css";
 
 function estadisticasVacias() {
@@ -13,9 +16,8 @@ function estadisticasVacias() {
 
 // Dashboard de reportes con diseño moderno y visual
 function ReportesPage() {
-  const clientes = useSelector((state) =>
-    Array.isArray(state.clientes.clientes) ? state.clientes.clientes : []
-  );
+  const dispatch = useDispatch();
+  const clientes = useSelector(selectClientesDecrypted);
   const registros = useSelector((state) =>
     Array.isArray(state.registrosHoras.registros)
       ? state.registrosHoras.registros
@@ -31,6 +33,13 @@ function ReportesPage() {
   const [filtro, setFiltro] = useState({ fechaInicio: "", fechaFin: "" });
   const [clienteSeleccionado, setClienteSeleccionado] = useState("");
   const [activeSection, setActiveSection] = useState("dashboard"); // "dashboard", "clientes", "exportar"
+
+  // Cargar clientes y registros al montar: este dashboard no puede depender
+  // de que el usuario haya visitado antes las paginas de Clientes/Registros
+  useEffect(() => {
+    dispatch(fetchClientes());
+    dispatch(fetchRegistrosHoras());
+  }, [dispatch]);
 
   // Filtrar registros por fechas
   const registrosFiltrados = useMemo(() => {
