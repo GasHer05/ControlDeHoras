@@ -145,6 +145,7 @@ function normalizeUser(docOrData, idFromDoc = null) {
     usuario: data.usuario || "",
     nombre: data.nombre || "",
     rol: data.rol || "",
+    role: data.rol || "", // alias en inglés: isAdmin/hasPermission lo requieren
     activo: typeof data.activo === "boolean" ? data.activo : false,
     fechaCreacion: convertTimestamp(data.fechaCreacion),
     fechaActualizacion: convertTimestamp(data.fechaActualizacion),
@@ -276,8 +277,10 @@ export const updateUser = async (id, userData) => {
 
     await updateDoc(docRef, updateData);
 
-    // Normalizar antes de retornar para evitar valores no serializables
-    return normalizeUser({ id, ...updateData });
+    // Releer el documento completo: updateData es parcial y no debe usarse
+    // para reconstruir el usuario (perdería campos no incluidos en la edición)
+    const updatedSnap = await getDoc(docRef);
+    return normalizeUser(updatedSnap);
   } catch (error) {
     console.error("Error actualizando usuario:", error);
     throw error;

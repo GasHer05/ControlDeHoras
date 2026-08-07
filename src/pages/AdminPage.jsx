@@ -59,9 +59,9 @@ function ConfiguracionSection() {
 // Componente de formulario para editar usuarios
 function EditUserForm({ user, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
-    fullName: user.fullName || "",
-    username: user.username || "",
-    role: user.role || "user",
+    fullName: user.nombre || "",
+    username: user.usuario || "",
+    role: user.rol || "user",
     securityAnswer: "",
   });
   const [errors, setErrors] = useState({});
@@ -69,9 +69,9 @@ function EditUserForm({ user, onSubmit, onCancel }) {
   // Sincronizar formData cuando cambie el usuario a editar
   React.useEffect(() => {
     setFormData({
-      fullName: user.fullName || "",
-      username: user.username || "",
-      role: user.role || "user",
+      fullName: user.nombre || "",
+      username: user.usuario || "",
+      role: user.rol || "user",
       securityAnswer: "",
     });
   }, [user]);
@@ -103,7 +103,7 @@ function EditUserForm({ user, onSubmit, onCancel }) {
 
   return (
     <div className="edit-user-form">
-      <h3>Editar Usuario: {user.username}</h3>
+      <h3>Editar Usuario: {user.usuario}</h3>
       <form onSubmit={handleSubmit}>
         <div>
           <label>Nombre Completo:</label>
