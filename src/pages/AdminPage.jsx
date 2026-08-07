@@ -62,6 +62,7 @@ function EditUserForm({ user, onSubmit, onCancel }) {
     fullName: user.fullName || "",
     username: user.username || "",
     role: user.role || "user",
+    securityAnswer: "",
   });
   const [errors, setErrors] = useState({});
 
@@ -71,6 +72,7 @@ function EditUserForm({ user, onSubmit, onCancel }) {
       fullName: user.fullName || "",
       username: user.username || "",
       role: user.role || "user",
+      securityAnswer: "",
     });
   }, [user]);
 
@@ -143,6 +145,18 @@ function EditUserForm({ user, onSubmit, onCancel }) {
             <option value="manager">Manager</option>
             <option value="admin">Administrador</option>
           </select>
+        </div>
+
+        <div>
+          <label>Respuesta de Seguridad:</label>
+          <input
+            type="text"
+            value={formData.securityAnswer}
+            onChange={(e) =>
+              setFormData({ ...formData, securityAnswer: e.target.value })
+            }
+            placeholder="¿Cuál es el nombre de tu primera mascota? (dejar en blanco para no cambiarla)"
+          />
         </div>
 
         <div className="form-actions">
@@ -452,7 +466,9 @@ function AdminPage() {
           usuario: updatedData.username,
           nombre: updatedData.fullName,
           rol: updatedData.role,
-          // Si hay otros campos, agrégalos aquí
+          ...(updatedData.securityAnswer.trim()
+            ? { securityAnswer: updatedData.securityAnswer.trim() }
+            : {}),
         },
         editedBy: currentUser.id,
       })

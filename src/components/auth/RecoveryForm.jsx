@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { recoveryPasswordUser, clearMessages } from "../../store/authSlice";
 import { getUserByUsername } from "../../services/userService";
+import { verifyPassword } from "../../utils/encryption";
 import PasswordInput from "../comunes/PasswordInput";
 import "./RecoveryForm.css";
 
@@ -11,6 +12,7 @@ function RecoveryForm({ onSwitchToLogin }) {
   const { error, success } = useSelector((state) => state.auth);
 
   const [username, setUsername] = useState("");
+  const [verifiedUser, setVerifiedUser] = useState(null);
   const [securityQuestion, setSecurityQuestion] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -103,7 +105,10 @@ function RecoveryForm({ onSwitchToLogin }) {
         setValidationErrors({ username: "El usuario no existe" });
         return;
       }
-      setSecurityQuestion("¿Cuál es el nombre de tu primera mascota?");
+      setVerifiedUser(user);
+      setSecurityQuestion(
+        user.securityQuestion || "¿Cuál es el nombre de tu primera mascota?"
+      );
       setStep(2);
     } catch (err) {
       setValidationErrors({ username: "Error verificando el usuario" });
@@ -112,10 +117,22 @@ function RecoveryForm({ onSwitchToLogin }) {
 
   const handleStep2 = (e) => {
     e.preventDefault();
-    if (validateFields()) {
-      // Simular verificación de respuesta de seguridad
-      setStep(3);
+    if (!validateFields()) return;
+
+    // Si el usuario tiene una respuesta guardada, validarla
+    if (verifiedUser?.securityAnswerHash) {
+      const isValid = verifyPassword(
+        securityAnswer.trim().toLowerCase(),
+        verifiedUser.securityAnswerHash,
+        verifiedUser.usuario
+      );
+      if (!isValid) {
+        setValidationErrors({ securityAnswer: "Respuesta incorrecta" });
+        return;
+      }
     }
+
+    setStep(3);
   };
 
   const handleStep3 = (e) => {

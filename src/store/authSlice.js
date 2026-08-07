@@ -136,7 +136,19 @@ export const recoveryPasswordUser = createAsyncThunk(
     try {
       const user = await getUserByUsername(username);
       if (!user) throw new Error("Usuario no encontrado");
-      // (Opcional) Validar respuesta de seguridad aquí si es necesario
+
+      // Validar respuesta de seguridad si el usuario tiene una guardada
+      if (user.securityAnswerHash) {
+        const isValidAnswer = verifyPassword(
+          (securityAnswer || "").trim().toLowerCase(),
+          user.securityAnswerHash,
+          user.usuario
+        );
+        if (!isValidAnswer) {
+          throw new Error("La respuesta de seguridad es incorrecta");
+        }
+      }
+
       // Actualizar contraseña
       const updates = { usuario: user.usuario, password: newPassword };
       return await updateUser(user.id, updates);

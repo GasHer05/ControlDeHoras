@@ -15,6 +15,8 @@ import {
 import { hashPassword } from "../utils/encryption";
 
 const COLLECTION_NAME = "usuarios";
+const DEFAULT_SECURITY_QUESTION = "¿Cuál es el nombre de tu primera mascota?";
+const normalizeAnswer = (answer) => answer.trim().toLowerCase();
 
 // Función para migrar usuarios desde localStorage a Firestore
 export const migrateUsersFromLocalStorage = async () => {
@@ -216,6 +218,10 @@ export const createUser = async (userData) => {
       passwordHash: passwordHash,
       rol: userData.rol,
       activo: true,
+      securityQuestion: DEFAULT_SECURITY_QUESTION,
+      securityAnswerHash: userData.securityAnswer
+        ? hashPassword(normalizeAnswer(userData.securityAnswer), userData.usuario)
+        : null,
       fechaCreacion: new Date(),
       fechaActualizacion: new Date(),
     };
@@ -252,6 +258,20 @@ export const updateUser = async (id, userData) => {
         userData.usuario
       );
       delete updateData.password; // No guardar la contraseña en texto plano
+    }
+
+    // Si hay nueva respuesta de seguridad, generar hash
+    if (userData.securityAnswer) {
+      if (!userData.usuario) {
+        throw new Error(
+          "El campo 'usuario' es requerido para actualizar la respuesta de seguridad."
+        );
+      }
+      updateData.securityAnswerHash = hashPassword(
+        normalizeAnswer(userData.securityAnswer),
+        userData.usuario
+      );
+      delete updateData.securityAnswer; // No guardar la respuesta en texto plano
     }
 
     await updateDoc(docRef, updateData);
