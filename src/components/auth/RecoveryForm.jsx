@@ -21,6 +21,17 @@ function RecoveryForm({ onSwitchToLogin }) {
     dispatch(clearMessages());
   }, [dispatch]);
 
+  // Volver al login automáticamente tras un cambio de contraseña exitoso
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        dispatch(clearMessages());
+        onSwitchToLogin();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, dispatch, onSwitchToLogin]);
+
   // Validar contraseña robusta
   const validatePassword = (password) => {
     const minLength = 8;

@@ -28,6 +28,7 @@ const initialState = {
   currentUser: null,
   loading: false,
   error: null,
+  success: null,
   users: [],
 };
 
@@ -180,6 +181,7 @@ const authSlice = createSlice({
     },
     clearMessages: (state) => {
       state.error = null;
+      state.success = null;
     },
   },
   extraReducers: (builder) => {
@@ -287,9 +289,9 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(recoveryPasswordUser.fulfilled, (state, action) => {
+      .addCase(recoveryPasswordUser.fulfilled, (state) => {
         state.loading = false;
-        // Opcional: podrías mostrar un mensaje de éxito
+        state.success = "Contraseña actualizada correctamente";
       })
       .addCase(recoveryPasswordUser.rejected, (state, action) => {
         state.loading = false;
@@ -300,9 +302,9 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(changePasswordUser.fulfilled, (state, action) => {
+      .addCase(changePasswordUser.fulfilled, (state) => {
         state.loading = false;
-        // Opcional: podrías mostrar un mensaje de éxito
+        state.success = "Contraseña actualizada correctamente";
       })
       .addCase(changePasswordUser.rejected, (state, action) => {
         state.loading = false;
