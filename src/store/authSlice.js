@@ -137,7 +137,7 @@ export const recoveryPasswordUser = createAsyncThunk(
       if (!user) throw new Error("Usuario no encontrado");
       // (Opcional) Validar respuesta de seguridad aquí si es necesario
       // Actualizar contraseña
-      const updates = { password: newPassword };
+      const updates = { usuario: user.usuario, password: newPassword };
       return await updateUser(user.id, updates);
     } catch (error) {
       return rejectWithValue(error.message);
@@ -161,7 +161,7 @@ export const changePasswordUser = createAsyncThunk(
       );
       if (!isValid) throw new Error("La contraseña actual es incorrecta");
       // Actualizar contraseña
-      const updates = { password: newPassword };
+      const updates = { usuario: user.usuario, password: newPassword };
       return await updateUser(user.id, updates);
     } catch (error) {
       return rejectWithValue(error.message);
