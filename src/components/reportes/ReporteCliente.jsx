@@ -130,13 +130,9 @@ async function exportarPDF({ cliente, gruposPorMoneda, ivaRate }) {
     doc.text(`${info.label}`, 14, y);
     doc.setFont(undefined, "normal");
     doc.setFontSize(10);
-    doc.text(`Subtotal: ${info.simbolo} ${formatNumber(grupo.totalMonto)}`, 14, y + 6);
-    doc.text(`IVA (${ivaRate}%): ${info.simbolo} ${formatNumber(grupo.totalIVA)}`, 90, y + 6);
-    doc.text(`Total: ${info.simbolo} ${formatNumber(grupo.totalConIVA)}`, 160, y + 6);
-    doc.text(`Total Horas: ${grupo.totalHoras}`, 14, y + 12);
 
     autoTable(doc, {
-      startY: y + 16,
+      startY: y + 6,
       head: [["Fecha", "Horas", "Monto", "Descuento", "Descripción"]],
       body: grupo.registros.map((r) => [
         r.fecha,
@@ -151,11 +147,26 @@ async function exportarPDF({ cliente, gruposPorMoneda, ivaRate }) {
       ]),
       styles: { fontSize: 9 },
       headStyles: { fillColor: [34, 46, 58] },
+      // Anchos fijos e iguales en todas las tablas (UYU y USD), sin importar
+      // el contenido de cada una, y con mas espacio para la descripcion.
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 15 },
+        2: { cellWidth: 25 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: "auto" },
+      },
       margin: { left: 10, right: 10 },
       theme: "grid",
     });
 
-    y = doc.lastAutoTable.finalY + 14;
+    y = doc.lastAutoTable.finalY + 8;
+    doc.text(`Subtotal: ${info.simbolo} ${formatNumber(grupo.totalMonto)}`, 14, y);
+    doc.text(`IVA (${ivaRate}%): ${info.simbolo} ${formatNumber(grupo.totalIVA)}`, 90, y);
+    doc.text(`Total: ${info.simbolo} ${formatNumber(grupo.totalConIVA)}`, 160, y);
+    doc.text(`Total Horas: ${grupo.totalHoras}`, 14, y + 6);
+
+    y += 20;
     if (y > 250) {
       doc.addPage();
       y = 20;
